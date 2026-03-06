@@ -38,6 +38,9 @@ Tsukkomi.configure do |config|
   # config.backend = :github_issues
   # config.github_repo = "owner/repo"
   # config.github_token = ENV["GITHUB_TOKEN"]
+  #
+  # vibe-kanban に連携する場合:
+  # config.backend = :vibe_kanban
 
   # --------------------------------------------------------------------------
   # ウィジェット設定
