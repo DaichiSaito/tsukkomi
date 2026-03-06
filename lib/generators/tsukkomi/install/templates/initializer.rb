@@ -41,6 +41,7 @@ Tsukkomi.configure do |config|
   #
   # vibe-kanban に連携する場合:
   # config.backend = :vibe_kanban
+  # config.vibe_kanban_project_id = ENV["VIBE_KANBAN_PROJECT_ID"]
 
   # --------------------------------------------------------------------------
   # ウィジェット設定
