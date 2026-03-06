@@ -14,10 +14,11 @@
 #
 Tsukkomi.configure do |config|
   # --------------------------------------------------------------------------
-  # LLM設定（必須）
+  # LLM設定
   # --------------------------------------------------------------------------
   # Anthropic API キー。フィードバックからタスクを自動生成するのに使います。
-  # 環境変数 ANTHROPIC_API_KEY を設定するか、ここに直接指定してください。
+  # ANTHROPIC_API_KEY が未設定の場合、Claude Code CLI に自動フォールバックします。
+  # （CLIモードではAPIキー不要・Claude Codeのログイン認証を使用）
   config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
 
   # 使用するClaudeモデル（デフォルト: claude-sonnet-4-20250514）
@@ -39,9 +40,10 @@ Tsukkomi.configure do |config|
   # config.github_repo = "owner/repo"
   # config.github_token = ENV["GITHUB_TOKEN"]
   #
-  # vibe-kanban に連携する場合:
+  # vibe-kanban に連携する場合（Claude Code CLI + MCP 経由）:
+  #   事前設定: claude mcp add vibe-kanban -- npx -y vibe-kanban@latest --mcp
   # config.backend = :vibe_kanban
-  # config.vibe_kanban_project_id = ENV["VIBE_KANBAN_PROJECT_ID"]
+  # config.vibe_kanban_project = "my-project"
 
   # --------------------------------------------------------------------------
   # ウィジェット設定
