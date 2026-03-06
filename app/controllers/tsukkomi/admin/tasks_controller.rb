@@ -64,6 +64,8 @@ module Tsukkomi
         case config.backend&.to_sym
         when :github_issues
           { repo: config.github_repo, token: config.github_token }
+        when :vibe_kanban
+          { project: config.vibe_kanban_project, project_id: config.vibe_kanban_project_id }
         else
           {}
         end

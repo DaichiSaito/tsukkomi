@@ -8,5 +8,26 @@ module Tsukkomi
         app.middleware.use Tsukkomi::Middleware::WidgetInjector
       end
     end
+
+    config.after_initialize do
+      config = Tsukkomi.configuration
+      if config.backend.present?
+        backend_name = config.backend.to_s
+        backend_config = case config.backend.to_sym
+          when :github_issues
+            { repo: config.github_repo, token: config.github_token }
+          when :vibe_kanban
+            { project: config.vibe_kanban_project, project_id: config.vibe_kanban_project_id }
+          else
+            {}
+          end
+
+        require "tsukkomi/backends/registry"
+        Tsukkomi::Backends::Registry.initialize_backends(
+          [backend_name],
+          { backend_name => backend_config }
+        )
+      end
+    end
   end
 end
