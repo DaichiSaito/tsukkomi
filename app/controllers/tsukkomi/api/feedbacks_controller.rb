@@ -9,7 +9,7 @@ module Tsukkomi
       # GET /api/feedbacks
       def index
         feedbacks = Tsukkomi::Feedback.includes(:task).order(created_at: :desc)
-        render json: feedbacks.map { |f| serialize_feedback(f) }
+        render json: { status: "ok", feedbacks: feedbacks.map { |f| serialize_feedback(f) } }
       end
 
       # POST /api/feedbacks
@@ -228,7 +228,8 @@ module Tsukkomi
             id: feedback.task.id,
             title: feedback.task.title,
             category: feedback.task.category,
-            status: feedback.task.status
+            status: feedback.task.status,
+            backendResults: feedback.task.backend_results
           } : nil
         }
       end

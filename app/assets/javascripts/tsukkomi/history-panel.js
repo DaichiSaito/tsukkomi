@@ -17,27 +17,41 @@ function formatDate(isoString) {
   return `${month}/${day} ${hours}:${minutes}`;
 }
 
-function getIssueUrl(backends) {
-  if (!backends) return null;
-  for (const key of Object.keys(backends)) {
-    const b = backends[key];
+function getBackendUrl(backendResults) {
+  if (!backendResults) return null;
+  const results = typeof backendResults === 'string' ? JSON.parse(backendResults) : backendResults;
+  // Check for direct url/html_url
+  if (results.url) return results.url;
+  if (results.html_url) return results.html_url;
+  // Check nested backend results (e.g. { github_issues: { result: { url: ... } } })
+  for (const key of Object.keys(results)) {
+    const b = results[key];
     if (b && b.result) {
       if (b.result.html_url) return b.result.html_url;
       if (b.result.url) return b.result.url;
-      if (b.result.issueUrl) return b.result.issueUrl;
     }
   }
   return null;
 }
 
-function buildFeedbackCard(entry) {
+function buildFeedbackCard(entry, apiBase) {
   const cat = CATEGORY_COLORS[entry.task?.category] || { bg: '#f3f4f6', color: '#6b7280', label: entry.task?.category || '不明' };
-  const issueUrl = getIssueUrl(entry.backends);
+  const backendUrl = getBackendUrl(entry.task?.backendResults);
 
-  const linkHtml = issueUrl
-    ? `<a href="${issueUrl}" target="_blank" rel="noopener" style="color:#2563eb;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:2px;">
-         Issue を開く ↗
-       </a>`
+  const links = [];
+
+  // 管理画面リンク
+  if (entry.task?.id) {
+    links.push(`<a href="${apiBase}/admin/tasks/${entry.task.id}" target="_blank" rel="noopener" style="color:#2563eb;font-size:12px;text-decoration:none;">詳細 ↗</a>`);
+  }
+
+  // バックエンドリンク
+  if (backendUrl) {
+    links.push(`<a href="${backendUrl}" target="_blank" rel="noopener" style="color:#2563eb;font-size:12px;text-decoration:none;">Issue ↗</a>`);
+  }
+
+  const linkHtml = links.length > 0
+    ? `<div style="display:flex;gap:8px;">${links.join('')}</div>`
     : '';
 
   return `
@@ -54,7 +68,7 @@ function buildFeedbackCard(entry) {
         ${escapeHtml(entry.comment)}
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:11px;color:#9ca3af;">${formatDate(entry.timestamp)} · ${escapeHtml(entry.page_url || '')}</span>
+        <span style="font-size:11px;color:#9ca3af;">${entry.submittedAt ? formatDate(entry.submittedAt) : ''} · ${escapeHtml(entry.pageUrl || '')}</span>
         ${linkHtml}
       </div>
     </div>
@@ -163,7 +177,7 @@ export function createHistoryPanel(shadowRoot, apiBase) {
         return;
       }
 
-      content.innerHTML = feedbacks.map(buildFeedbackCard).join('');
+      content.innerHTML = feedbacks.map(f => buildFeedbackCard(f, apiBase)).join('');
     } catch (err) {
       console.error('[feedback-collector] Failed to fetch history:', err);
       content.innerHTML = '<div style="padding:40px 16px;text-align:center;color:#ef4444;font-size:14px;">履歴の取得に失敗しました</div>';
