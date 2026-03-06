@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tsukkomi - フィードバック管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-14">
+        <div class="flex items-center">
+          <a href="<%= tsukkomi.admin_root_path %>" class="text-lg font-bold text-gray-900">Tsukkomi</a>
+          <span class="ml-3 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">dev</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <% if notice %>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+      <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm"><%= notice %></div>
+    </div>
+  <% end %>
+  <% if alert %>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+      <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm"><%= alert %></div>
+    </div>
+  <% end %>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <%= yield %>
+  </main>
+</body>
+</html>

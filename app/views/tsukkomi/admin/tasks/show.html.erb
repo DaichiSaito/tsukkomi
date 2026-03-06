@@ -1,0 +1,120 @@
+<div class="mb-6">
+  <%= link_to "← タスク一覧", tsukkomi.admin_tasks_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+</div>
+
+<div class="mb-4">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2"><%= @task.title %></h1>
+  <div class="flex gap-2">
+    <% category_colors = { "bug" => "bg-red-100 text-red-800", "improvement" => "bg-blue-100 text-blue-800", "question" => "bg-purple-100 text-purple-800" } %>
+    <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= category_colors[@task.category] %>"><%= @task.category %></span>
+    <% status_colors = { "pending" => "bg-yellow-100 text-yellow-800", "synced" => "bg-green-100 text-green-800", "failed" => "bg-red-100 text-red-800" } %>
+    <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= status_colors[@task.status] %>"><%= @task.status %></span>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- 左カラム (2/3) -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- タスク説明 -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <h2 class="text-sm font-medium text-gray-500 mb-3">タスク説明</h2>
+      <div class="text-sm text-gray-900 whitespace-pre-wrap"><%= @task.description %></div>
+    </div>
+
+    <!-- フィードバック情報 -->
+    <% if @task.feedback %>
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-sm font-medium text-gray-500 mb-3">フィードバック情報</h2>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="font-medium text-gray-500">コメント</dt>
+            <dd class="mt-1 text-gray-900 whitespace-pre-wrap"><%= @task.feedback.comment %></dd>
+          </div>
+          <% if @task.feedback.page_url.present? %>
+            <div>
+              <dt class="font-medium text-gray-500">URL</dt>
+              <dd class="mt-1 text-gray-900 break-all"><%= @task.feedback.page_url %></dd>
+            </div>
+          <% end %>
+          <% if @task.feedback.selector.present? %>
+            <div>
+              <dt class="font-medium text-gray-500">セレクタ</dt>
+              <dd class="mt-1 text-gray-900 font-mono text-xs bg-gray-50 px-2 py-1 rounded"><%= @task.feedback.selector %></dd>
+            </div>
+          <% end %>
+          <% if @task.feedback.try(:coordinates).present? %>
+            <div>
+              <dt class="font-medium text-gray-500">座標</dt>
+              <dd class="mt-1 text-gray-900"><%= @task.feedback.coordinates %></dd>
+            </div>
+          <% end %>
+          <% if @task.feedback.browser.present? %>
+            <div>
+              <dt class="font-medium text-gray-500">ブラウザ</dt>
+              <dd class="mt-1 text-gray-900"><%= @task.feedback.browser %></dd>
+            </div>
+          <% end %>
+          <% if @task.feedback.viewport.present? %>
+            <div>
+              <dt class="font-medium text-gray-500">ビューポート</dt>
+              <dd class="mt-1 text-gray-900"><%= @task.feedback.viewport %></dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 右カラム (1/3) -->
+  <div class="space-y-6">
+    <!-- スクリーンショット -->
+    <% if @task.feedback&.screenshot&.attached? %>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <h2 class="text-sm font-medium text-gray-500 mb-3">スクリーンショット</h2>
+        <%= image_tag Rails.application.routes.url_helpers.rails_blob_path(@task.feedback.screenshot, only_path: true), class: "w-full rounded border border-gray-200", alt: "スクリーンショット" %>
+      </div>
+    <% end %>
+
+    <!-- メタデータ -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4">
+      <h2 class="text-sm font-medium text-gray-500 mb-3">メタデータ</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-500">作成日時</dt>
+          <dd class="text-gray-900"><%= @task.created_at.strftime("%Y-%m-%d %H:%M") %></dd>
+        </div>
+        <% if @task.synced_at.present? %>
+          <div class="flex justify-between">
+            <dt class="text-gray-500">同期日時</dt>
+            <dd class="text-gray-900"><%= @task.synced_at.strftime("%Y-%m-%d %H:%M") %></dd>
+          </div>
+        <% end %>
+        <% if @task.feedback&.try(:reporter).present? %>
+          <div class="flex justify-between">
+            <dt class="text-gray-500">レポーター</dt>
+            <dd class="text-gray-900"><%= @task.feedback.reporter %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <!-- バックエンド連携状況 -->
+    <% if @task.backend_results.present? %>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <h2 class="text-sm font-medium text-gray-500 mb-3">バックエンド連携結果</h2>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= JSON.pretty_generate(@task.backend_results) rescue @task.backend_results %></pre>
+      </div>
+    <% end %>
+
+    <!-- 手動連携ボタン -->
+    <% if @task.status.in?(%w[pending failed]) %>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <%= form_with url: tsukkomi.sync_to_backend_admin_task_path(@task), method: :post, local: true do %>
+          <button type="submit" class="w-full bg-gray-900 text-white text-sm px-4 py-2.5 rounded-md hover:bg-gray-700 transition">
+            バックエンドに連携する
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

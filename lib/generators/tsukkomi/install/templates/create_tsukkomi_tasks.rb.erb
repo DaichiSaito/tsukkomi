@@ -1,0 +1,19 @@
+class CreateTsukkomiTasks < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :tsukkomi_tasks do |t|
+      t.references :feedback, null: false, foreign_key: { to_table: :tsukkomi_feedbacks }
+      t.string :title, null: false
+      t.string :category, null: false
+      t.text :description
+      t.json :labels, default: []
+      t.string :status, default: "pending", null: false
+      t.json :backend_results, default: {}
+      t.datetime :synced_at
+
+      t.timestamps
+    end
+
+    add_index :tsukkomi_tasks, :status
+    add_index :tsukkomi_tasks, :category
+  end
+end

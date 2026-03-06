@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "build:widget": "esbuild app/assets/javascripts/tsukkomi/widget.js --bundle --minify --format=iife --target=es2020 --platform=browser --outfile=app/assets/builds/tsukkomi/widget.bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

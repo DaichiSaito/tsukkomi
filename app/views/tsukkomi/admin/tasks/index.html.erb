@@ -1,0 +1,95 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">タスク一覧</h1>
+</div>
+
+<!-- フィルターバー -->
+<div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+  <%= form_with url: tsukkomi.admin_tasks_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |f| %>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">ステータス</label>
+      <select name="status" class="block w-40 rounded-md border-gray-300 bg-gray-50 text-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+        <option value="">全て</option>
+        <% %w[pending synced failed].each do |s| %>
+          <option value="<%= s %>" <%= "selected" if params[:status] == s %>><%= s %></option>
+        <% end %>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">カテゴリ</label>
+      <select name="category" class="block w-40 rounded-md border-gray-300 bg-gray-50 text-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+        <option value="">全て</option>
+        <% %w[bug improvement question].each do |c| %>
+          <option value="<%= c %>" <%= "selected" if params[:category] == c %>><%= c %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="flex-1 min-w-[200px]">
+      <label class="block text-xs font-medium text-gray-500 mb-1">検索</label>
+      <input type="text" name="q" value="<%= params[:q] %>" placeholder="タイトル・説明を検索..."
+             class="block w-full rounded-md border-gray-300 bg-gray-50 text-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+    </div>
+    <div>
+      <button type="submit" class="bg-gray-900 text-white text-sm px-4 py-2 rounded-md hover:bg-gray-700 transition">絞り込み</button>
+    </div>
+  <% end %>
+</div>
+
+<!-- テーブル -->
+<% if @tasks.any? %>
+  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">タイトル</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">作成日時</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @tasks.each do |task| %>
+          <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='<%= tsukkomi.admin_task_path(task) %>'">
+            <td class="px-4 py-3 text-sm text-gray-500"><%= task.id %></td>
+            <td class="px-4 py-3 text-sm font-medium text-gray-900"><%= task.title %></td>
+            <td class="px-4 py-3 text-sm">
+              <% category_colors = { "bug" => "bg-red-100 text-red-800", "improvement" => "bg-blue-100 text-blue-800", "question" => "bg-purple-100 text-purple-800" } %>
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= category_colors[task.category] %>"><%= task.category %></span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% status_colors = { "pending" => "bg-yellow-100 text-yellow-800", "synced" => "bg-green-100 text-green-800", "failed" => "bg-red-100 text-red-800" } %>
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= status_colors[task.status] %>"><%= task.status %></span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-500"><%= task.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td class="px-4 py-3 text-sm text-right">
+              <%= link_to "詳細", tsukkomi.admin_task_path(task), class: "text-blue-600 hover:text-blue-800" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ページネーション -->
+  <% total_pages = (@total.to_f / @per_page).ceil %>
+  <% if total_pages > 1 %>
+    <div class="flex items-center justify-between mt-4">
+      <p class="text-sm text-gray-500"><%= @total %>件中 <%= (@page - 1) * @per_page + 1 %>〜<%= [@page * @per_page, @total].min %>件</p>
+      <div class="flex gap-2">
+        <% if @page > 1 %>
+          <%= link_to "前へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], q: params[:q], page: @page - 1),
+                class: "px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition" %>
+        <% end %>
+        <% if @page < total_pages %>
+          <%= link_to "次へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], q: params[:q], page: @page + 1),
+                class: "px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+    <p class="text-gray-500">タスクがまだありません</p>
+  </div>
+<% end %>

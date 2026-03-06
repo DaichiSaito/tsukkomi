@@ -1,0 +1,16 @@
+class CreateTsukkomiFeedbacks < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :tsukkomi_feedbacks do |t|
+      t.text :comment, null: false
+      t.string :page_url
+      t.string :selector
+      t.json :coordinates
+      t.string :reporter, default: "anonymous"
+      t.string :browser
+      t.json :viewport
+      t.datetime :submitted_at
+
+      t.timestamps
+    end
+  end
+end
