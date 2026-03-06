@@ -1,10 +1,8 @@
 module Tsukkomi
   module Api
     class FeedbacksController < ApplicationController
-      include ActionController::Live
-
       skip_before_action :verify_authenticity_token
-      before_action :set_feedback, only: [:status]
+      before_action :set_feedback, only: [:status, :sync_backend]
 
       # GET /api/feedbacks
       def index
@@ -23,111 +21,51 @@ module Tsukkomi
 
         attach_screenshot(feedback)
 
-        if request.headers["X-Async"] == "true"
-          Tsukkomi::ProcessFeedbackJob.perform_later(feedback.id)
-          render json: { feedbackId: feedback.id, status: "accepted" }, status: :accepted
-        else
-          process_feedback_sync(feedback)
-        end
-      end
-
-      # POST /api/feedbacks/preview
-      def preview
-        feedback = Tsukkomi::Feedback.new(feedback_params)
-        feedback.submitted_at = Time.current
-
-        unless feedback.save
-          return render json: { error: feedback.errors.full_messages.join(", ") }, status: :unprocessable_entity
-        end
-
-        attach_screenshot(feedback)
-
-        generator = Tsukkomi::Llm::TaskGenerator.new
-        result = generator.generate(build_feedback_data(feedback))
-
-        preview_id = SecureRandom.uuid
-        Rails.cache.write("tsukkomi:preview:#{preview_id}", { feedback_id: feedback.id, task: result }, expires_in: 10.minutes)
-
-        render json: {
-          previewId: preview_id,
-          feedbackId: feedback.id,
-          task: result
-        }
-      end
-
-      # POST /api/feedbacks/confirm
-      def confirm
-        preview_id = params[:previewId] || params[:preview_id]
-        cached = Rails.cache.read("tsukkomi:preview:#{preview_id}")
-
-        unless cached
-          return render json: { error: "Preview not found or expired" }, status: :not_found
-        end
-
-        feedback = Tsukkomi::Feedback.find(cached[:feedback_id])
-        task_data = cached[:task]
-
-        task = feedback.create_task!(
-          title: task_data["title"] || task_data[:title],
-          category: task_data["category"] || task_data[:category],
-          description: task_data["description"] || task_data[:description],
-          labels: task_data["labels"] || task_data[:labels],
-          status: "pending"
-        )
-
-        sync_to_backend = params.fetch(:sync_to_backend, true)
-        sync_to_backend = sync_to_backend != "false" && sync_to_backend != false
-
-        if sync_to_backend && Tsukkomi.configuration.backend.present?
-          begin
-            backend_results = Tsukkomi::Backends::Registry.submit_to_all(
-              task_data, build_feedback_data(feedback)
-            )
-            task.update!(status: "synced", backend_results: backend_results.to_json, synced_at: Time.current)
-          rescue => e
-            task.update!(status: "failed", backend_results: { error: e.message }.to_json)
-          end
-        end
-
-        Rails.cache.delete("tsukkomi:preview:#{preview_id}")
-
-        render json: {
-          feedbackId: feedback.id,
-          task: {
-            id: task.id,
-            title: task.title,
-            category: task.category,
-            description: task.description,
-            labels: task.labels,
-            status: task.status
-          }
-        }
+        Tsukkomi::ProcessFeedbackJob.perform_later(feedback.id)
+        render json: { feedbackId: feedback.id, status: "accepted" }, status: :accepted
       end
 
       # GET /api/feedbacks/:id/status
       def status
-        response.headers["Content-Type"] = "text/event-stream"
-        response.headers["Cache-Control"] = "no-cache"
-        response.headers["X-Accel-Buffering"] = "no"
-
         task = @feedback.task
 
         if task
-          data = {
-            step: task.status == "synced" ? "completed" : "pending",
-            task: { title: task.title, category: task.category }
+          render json: {
+            feedbackId: @feedback.id,
+            status: task.status,
+            task: {
+              id: task.id,
+              title: task.title,
+              category: task.category,
+              description: task.description,
+              labels: task.labels,
+              status: task.status,
+              backendResults: task.backend_results
+            }
           }
-          response.stream.write("event: status\ndata: #{data.to_json}\n\n")
         else
-          data = { step: "llm_processing", message: "AIがタスクを生成中..." }
-          response.stream.write("event: status\ndata: #{data.to_json}\n\n")
+          render json: { feedbackId: @feedback.id, status: "accepted" }
+        end
+      end
+
+      # POST /api/feedbacks/:id/sync_backend
+      def sync_backend
+        task = @feedback.task
+
+        unless task
+          return render json: { error: "Task not found" }, status: :not_found
         end
 
-        response.stream.close
-      rescue ActionController::Live::ClientDisconnected
-        # client disconnected
-      ensure
-        response.stream.close rescue nil
+        unless task.status.in?(%w[generated failed])
+          return render json: { error: "Task is not ready for backend sync (status: #{task.status})" }, status: :unprocessable_entity
+        end
+
+        unless Tsukkomi.configuration.backend.present?
+          return render json: { error: "No backend configured" }, status: :unprocessable_entity
+        end
+
+        Tsukkomi::SyncToBackendJob.perform_later(task.id)
+        render json: { feedbackId: @feedback.id, taskId: task.id, status: "syncing" }
       end
 
       private
@@ -156,63 +94,6 @@ module Tsukkomi
         )
       end
 
-      def process_feedback_sync(feedback)
-        generator = Tsukkomi::Llm::TaskGenerator.new
-        result = generator.generate(build_feedback_data(feedback))
-
-        task = feedback.create_task!(
-          title: result["title"] || result[:title],
-          category: result["category"] || result[:category],
-          description: result["description"] || result[:description],
-          labels: result["labels"] || result[:labels],
-          status: "pending"
-        )
-
-        if Tsukkomi.configuration.backend.present?
-          begin
-            backend_results = Tsukkomi::Backends::Registry.submit_to_all(
-              result, build_feedback_data(feedback)
-            )
-            task.update!(status: "synced", backend_results: backend_results.to_json, synced_at: Time.current)
-          rescue => e
-            task.update!(status: "failed", backend_results: { error: e.message }.to_json)
-          end
-        end
-
-        render json: {
-          feedbackId: feedback.id,
-          task: {
-            id: task.id,
-            title: task.title,
-            category: task.category,
-            description: task.description,
-            labels: task.labels,
-            status: task.status
-          }
-        }
-      end
-
-      def build_feedback_data(feedback)
-        {
-          comment: feedback.comment,
-          page_url: feedback.page_url,
-          selector: feedback.selector,
-          coordinates: feedback.coordinates,
-          browser: feedback.browser,
-          viewport: feedback.viewport,
-          timestamp: feedback.submitted_at&.iso8601,
-          screenshot: feedback.screenshot.attached? ? screenshot_data_url(feedback) : nil
-        }
-      end
-
-      def screenshot_data_url(feedback)
-        blob = feedback.screenshot.blob
-        content_type = blob.content_type
-        data = blob.download
-        encoded = Base64.strict_encode64(data)
-        "data:#{content_type};base64,#{encoded}"
-      end
-
       def serialize_feedback(feedback)
         {
           id: feedback.id,
@@ -228,6 +109,8 @@ module Tsukkomi
             id: feedback.task.id,
             title: feedback.task.title,
             category: feedback.task.category,
+            description: feedback.task.description,
+            labels: feedback.task.labels,
             status: feedback.task.status,
             backendResults: feedback.task.backend_results
           } : nil

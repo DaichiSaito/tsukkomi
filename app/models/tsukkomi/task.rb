@@ -5,7 +5,7 @@ module Tsukkomi
     belongs_to :feedback, class_name: "Tsukkomi::Feedback"
 
     CATEGORIES = %w[bug improvement question].freeze
-    STATUSES = %w[pending synced failed].freeze
+    STATUSES = %w[processing generated pending synced failed].freeze
 
     validates :title, presence: true
     validates :category, presence: true, inclusion: { in: CATEGORIES }

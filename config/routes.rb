@@ -5,12 +5,9 @@ Tsukkomi::Engine.routes.draw do
   # API
   namespace :api do
     resources :feedbacks, only: [:index, :create] do
-      collection do
-        post :preview
-        post :confirm
-      end
       member do
         get :status
+        post :sync_backend
       end
     end
   end
