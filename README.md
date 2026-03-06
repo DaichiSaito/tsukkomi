@@ -54,6 +54,18 @@ Tsukkomi.configure do |config|
 
   # レポーター名（デフォルト: "anonymous"）
   # config.reporter = "anonymous"
+
+  # タスク生成プロンプトのカスタマイズ
+  # 文字列: デフォルトプロンプトに追加指示として付加
+  # config.task_prompt = "タイトルは英語で出力してください"
+  # Proc: プロンプト全体を自由に構築
+  # config.task_prompt = ->(feedback, has_screenshot) {
+  #   <<~PROMPT
+  #     あなたはQAエンジニアです。
+  #     コメント: #{feedback[:comment]}
+  #     ...
+  #   PROMPT
+  # }
 end
 ```
 

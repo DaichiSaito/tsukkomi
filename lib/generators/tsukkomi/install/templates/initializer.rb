@@ -48,4 +48,26 @@ Tsukkomi.configure do |config|
 
   # フィードバック送信者の表示名（デフォルト: "anonymous"）
   # config.reporter = "anonymous"
+
+  # --------------------------------------------------------------------------
+  # タスク生成プロンプトのカスタマイズ（任意）
+  # --------------------------------------------------------------------------
+  # LLM に送るプロンプトをカスタマイズできます。
+  #
+  # 文字列を指定すると、デフォルトプロンプトの末尾に「追加指示」として付加されます:
+  #   config.task_prompt = "タイトルは英語で出力してください"
+  #
+  # Proc を指定すると、プロンプト全体を自由に構築できます:
+  #   config.task_prompt = ->(feedback, has_screenshot) {
+  #     <<~PROMPT
+  #       あなたはQAエンジニアです。
+  #       以下のフィードバックを分析し、開発タスクをJSON形式で生成してください。
+  #
+  #       コメント: #{feedback[:comment]}
+  #       ページURL: #{feedback[:page_url]}
+  #
+  #       {"title": "...", "category": "bug|improvement|question", "description": "...", "labels": [...]}
+  #     PROMPT
+  #   }
+  # config.task_prompt = nil
 end

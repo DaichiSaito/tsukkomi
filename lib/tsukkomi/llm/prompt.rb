@@ -6,6 +6,11 @@ module Tsukkomi
       module_function
 
       def build_api_prompt(feedback, has_screenshot)
+        custom = Tsukkomi.configuration.task_prompt
+        if custom.is_a?(Proc)
+          return custom.call(feedback, has_screenshot)
+        end
+
         comment = feedback[:comment]
         page_url = feedback[:page_url] || "不明"
         selector = feedback[:selector] || "不明"
@@ -37,7 +42,7 @@ module Tsukkomi
           ""
         end
 
-        <<~PROMPT
+        prompt = <<~PROMPT
           あなたはWebアプリの品質管理アシスタントです。
           レビュアーからのフィードバックを分析し、開発チーム向けの構造化タスクを生成してください。
 
@@ -76,6 +81,12 @@ module Tsukkomi
           - labelsはcategoryと同じ値を含める
           - レビュアーの曖昧なコメントでも、スクリーンショットやURLやCSSセレクタの文脈から具体化する
         PROMPT
+
+        if custom.is_a?(String) && !custom.empty?
+          prompt += "\n## 追加指示\n\n#{custom}\n"
+        end
+
+        prompt
       end
     end
   end
