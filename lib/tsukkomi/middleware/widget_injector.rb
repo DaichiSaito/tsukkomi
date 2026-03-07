@@ -16,7 +16,8 @@ module Tsukkomi
         response.close if response.respond_to?(:close)
 
         reporter = Tsukkomi.configuration.reporter || "anonymous"
-        script_tag = %(<script src="/tsukkomi/widget.js" data-api-base="/tsukkomi" data-reporter="#{reporter}" data-confirm-before-submit="true"></script>)
+        backend = Tsukkomi.configuration.backend
+        script_tag = %(<script src="/tsukkomi/widget.js" data-api-base="/tsukkomi" data-reporter="#{reporter}" data-confirm-before-submit="true"#{backend.present? ? %( data-backend="#{backend}") : ""}></script>)
 
         if body.include?("</body>")
           body = body.sub("</body>", "#{script_tag}\n</body>")

@@ -56,7 +56,15 @@ function buildStatusBadge(status) {
   return `<span style="font-size:10px;padding:2px 6px;border-radius:9999px;background:${s.bg};color:${s.color};font-weight:500;${isAnimated ? 'animation:fc-pulse 1.5s ease-in-out infinite;' : ''}">${s.label}</span>`;
 }
 
-function buildFeedbackCard(entry, apiBase) {
+function getSyncLabel(backend) {
+  switch (backend) {
+    case 'github_issues': return 'GitHub に登録';
+    case 'vibe_kanban': return 'VibeKanban に登録';
+    default: return 'バックエンドに登録';
+  }
+}
+
+function buildFeedbackCard(entry, apiBase, backend) {
   const task = entry.task;
   const cat = CATEGORY_COLORS[task?.category] || { bg: '#f3f4f6', color: '#6b7280', label: task?.category || '不明' };
   const backendUrl = getBackendUrl(task?.backendResults);
@@ -76,8 +84,8 @@ function buildFeedbackCard(entry, apiBase) {
     ? `<div style="display:flex;gap:8px;">${links.join('')}</div>`
     : '';
 
-  const syncBtnHtml = (status === 'generated' || status === 'failed')
-    ? `<button data-sync-feedback-id="${entry.id}" style="margin-top:6px;padding:4px 10px;border:none;border-radius:4px;background:#2563eb;color:#fff;cursor:pointer;font-size:11px;font-weight:500;">バックエンドに登録</button>`
+  const syncBtnHtml = (status === 'generated' || status === 'failed') && backend
+    ? `<button data-sync-feedback-id="${entry.id}" style="margin-top:6px;padding:4px 10px;border:none;border-radius:4px;background:#2563eb;color:#fff;cursor:pointer;font-size:11px;font-weight:500;">${getSyncLabel(backend)}</button>`
     : '';
 
   const titleText = status === 'processing'
@@ -114,7 +122,7 @@ function buildFeedbackCard(entry, apiBase) {
  * @param {function} options.onStatusChange - Called when a feedback's status transitions.
  *   Receives ({ feedbackId, task, oldStatus, newStatus }).
  */
-export function createHistoryPanel(shadowRoot, apiBase, options = {}) {
+export function createHistoryPanel(shadowRoot, apiBase, backend, options = {}) {
   let panel = null;
   let isOpen = false;
   let bgPollTimer = null;
@@ -205,7 +213,7 @@ export function createHistoryPanel(shadowRoot, apiBase, options = {}) {
       return;
     }
 
-    content.innerHTML = latestFeedbacks.map(f => buildFeedbackCard(f, apiBase)).join('');
+    content.innerHTML = latestFeedbacks.map(f => buildFeedbackCard(f, apiBase, backend)).join('');
 
     // Attach sync button handlers
     content.querySelectorAll('[data-sync-feedback-id]').forEach(btn => {

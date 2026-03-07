@@ -15,6 +15,7 @@ import { createHistoryPanel } from './history-panel.js';
   const reporter = currentScript?.getAttribute('data-reporter') || 'anonymous';
   const position = currentScript?.getAttribute('data-position') || 'bottom-right';
   const apiBase = currentScript?.getAttribute('data-api-base') || '/tsukkomi';
+  const backend = currentScript?.getAttribute('data-backend') || '';
 
   // Create Shadow DOM host
   const host = document.createElement('div');
@@ -95,16 +96,18 @@ import { createHistoryPanel } from './history-panel.js';
   shadow.insertBefore(historyBtn, btn);
 
   // Initialize history panel with status change notifications
-  const historyPanel = createHistoryPanel(shadow, apiBase, {
+  const historyPanel = createHistoryPanel(shadow, apiBase, backend, {
     onStatusChange({ task, oldStatus, newStatus }) {
       const title = task?.title || 'タスク';
 
       if (newStatus === 'generated' && oldStatus === 'processing') {
         showToast(`タスク生成完了: ${title}`, '#10b981');
       } else if (newStatus === 'synced') {
-        showToast(`バックエンド登録完了: ${title}`, '#10b981');
+        const dest = backend === 'github_issues' ? 'GitHub' : backend === 'vibe_kanban' ? 'VibeKanban' : 'バックエンド';
+        showToast(`${dest} 登録完了: ${title}`, '#10b981');
       } else if (newStatus === 'failed' && oldStatus === 'pending') {
-        showToast(`バックエンド登録失敗: ${title}`, '#ef4444');
+        const dest = backend === 'github_issues' ? 'GitHub' : backend === 'vibe_kanban' ? 'VibeKanban' : 'バックエンド';
+        showToast(`${dest} 登録失敗: ${title}`, '#ef4444');
       } else if (newStatus === 'failed' && oldStatus === 'processing') {
         showToast(`タスク生成失敗: ${title}`, '#ef4444');
       }
