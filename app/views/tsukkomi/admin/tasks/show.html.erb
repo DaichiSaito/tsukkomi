@@ -102,18 +102,46 @@
     <% if @task.backend_results.present? %>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <h2 class="text-sm font-medium text-gray-500 mb-3">バックエンド連携結果</h2>
-        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= JSON.pretty_generate(@task.backend_results) rescue @task.backend_results %></pre>
+        <%
+          parsed_results = begin
+            raw = @task.backend_results
+            raw.is_a?(String) ? JSON.parse(raw) : raw
+          rescue
+            nil
+          end
+          issue_url = parsed_results&.dig("results", "github_issues", "result", "url")
+        %>
+        <% if issue_url.present? %>
+          <div class="mb-3">
+            <%= link_to issue_url, issue_url, target: "_blank", rel: "noopener", class: "text-sm text-blue-600 hover:text-blue-800 hover:underline break-all" %>
+          </div>
+        <% end %>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= parsed_results ? JSON.pretty_generate(parsed_results) : @task.backend_results %></pre>
       </div>
     <% end %>
 
     <!-- 手動連携ボタン -->
     <% if @task.status.in?(%w[generated pending failed]) %>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <%= form_with url: tsukkomi.sync_to_backend_admin_task_path(@task), method: :post, local: true, data: { turbo: false } do %>
-          <button type="submit" class="w-full bg-gray-900 text-white text-sm px-4 py-2.5 rounded-md hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  onclick="this.disabled=true;this.textContent='バックエンド連携中...';this.form.submit();">
-            バックエンドに連携する
-          </button>
+        <% if Tsukkomi.configuration.backend.present? %>
+          <%
+            sync_label = case Tsukkomi.configuration.backend.to_sym
+                         when :github_issues then "GitHub に issue を作成する"
+                         when :vibe_kanban then "VibeKanban にタスクを作成する"
+                         end
+            sync_loading = case Tsukkomi.configuration.backend.to_sym
+                           when :github_issues then "GitHub に作成中..."
+                           when :vibe_kanban then "VibeKanban に作成中..."
+                           end
+          %>
+          <%= form_with url: tsukkomi.sync_to_backend_admin_task_path(@task), method: :post, local: true, data: { turbo: false } do %>
+            <button type="submit" class="w-full bg-gray-900 text-white text-sm px-4 py-2.5 rounded-md hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    onclick="this.disabled=true;this.textContent='<%= sync_loading %>';this.form.submit();">
+              <%= sync_label %>
+            </button>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-gray-500">バックエンド連携を利用するには、initializer で <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">config.backend</code> を設定してください。</p>
         <% end %>
       </div>
     <% end %>

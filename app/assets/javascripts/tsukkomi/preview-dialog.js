@@ -19,7 +19,15 @@ function escapeHtml(str) {
  * Returns { action: 'confirm', syncToBackend: true } to sync to backend,
  * or null if dismissed.
  */
-export function showPreviewDialog(shadowRoot, task) {
+function getSyncLabel(backend) {
+  switch (backend) {
+    case 'github_issues': return 'GitHub に登録';
+    case 'vibe_kanban': return 'VibeKanban に登録';
+    default: return 'バックエンドに登録';
+  }
+}
+
+export function showPreviewDialog(shadowRoot, task, backend) {
   return new Promise((resolve) => {
     const cat = CATEGORY_LABELS[task.category] || { label: task.category, color: '#6b7280', bg: '#f3f4f6' };
 
@@ -70,7 +78,7 @@ export function showPreviewDialog(shadowRoot, task) {
       ${descriptionHtml}
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
         <button id="fc-preview-close" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;">閉じる</button>
-        <button id="fc-preview-sync" style="padding:8px 16px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">バックエンドに登録</button>
+        <button id="fc-preview-sync" style="padding:8px 16px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">${getSyncLabel(backend)}</button>
       </div>
     `;
 
