@@ -45,45 +45,46 @@ export function createAnnotator() {
       pointerEvents: 'none',
       zIndex: '1',
     });
-    hint.textContent = 'ドラッグで範囲を選択してください（ESCでキャンセル）';
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    hint.textContent = isTouchDevice
+      ? 'ドラッグで範囲を選択してください'
+      : 'ドラッグで範囲を選択してください（ESCでキャンセル）';
     overlay.appendChild(hint);
 
     let startX = 0, startY = 0, isDragging = false;
 
-    overlay.addEventListener('mousedown', (e) => {
-      startX = e.clientX;
-      startY = e.clientY;
+    function onPointerStart(clientX, clientY) {
+      startX = clientX;
+      startY = clientY;
       isDragging = true;
-      // Switch from full dim to selection-based dim
       overlay.style.background = 'transparent';
       selection.style.display = 'block';
-    });
+    }
 
-    overlay.addEventListener('mousemove', (e) => {
+    function onPointerMove(clientX, clientY) {
       if (!isDragging) return;
-      const x = Math.min(startX, e.clientX);
-      const y = Math.min(startY, e.clientY);
-      const w = Math.abs(e.clientX - startX);
-      const h = Math.abs(e.clientY - startY);
+      const x = Math.min(startX, clientX);
+      const y = Math.min(startY, clientY);
+      const w = Math.abs(clientX - startX);
+      const h = Math.abs(clientY - startY);
       Object.assign(selection.style, {
         left: x + 'px',
         top: y + 'px',
         width: w + 'px',
         height: h + 'px',
       });
-    });
+    }
 
-    overlay.addEventListener('mouseup', (e) => {
+    function onPointerEnd(clientX, clientY) {
       if (!isDragging) return;
       isDragging = false;
 
-      const x = Math.min(startX, e.clientX);
-      const y = Math.min(startY, e.clientY);
-      const w = Math.abs(e.clientX - startX);
-      const h = Math.abs(e.clientY - startY);
+      const x = Math.min(startX, clientX);
+      const y = Math.min(startY, clientY);
+      const w = Math.abs(clientX - startX);
+      const h = Math.abs(clientY - startY);
 
       if (w < 5 || h < 5) {
-        // Too small - reset to initial state
         selection.style.display = 'none';
         overlay.style.background = 'rgba(0,0,0,0.3)';
         return;
@@ -91,7 +92,6 @@ export function createAnnotator() {
 
       overlay.remove();
 
-      // Get CSS selector of the element at center of selection
       const centerEl = document.elementFromPoint(x + w / 2, y + h / 2);
       const selector = centerEl ? getCssSelector(centerEl) : '';
 
@@ -99,6 +99,28 @@ export function createAnnotator() {
         coordinates: { x, y, w, h },
         selector,
       });
+    }
+
+    // Mouse events
+    overlay.addEventListener('mousedown', (e) => onPointerStart(e.clientX, e.clientY));
+    overlay.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+    overlay.addEventListener('mouseup', (e) => onPointerEnd(e.clientX, e.clientY));
+
+    // Touch events
+    overlay.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      onPointerStart(t.clientX, t.clientY);
+    }, { passive: false });
+    overlay.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      onPointerMove(t.clientX, t.clientY);
+    }, { passive: false });
+    overlay.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      onPointerEnd(t.clientX, t.clientY);
     });
 
     document.addEventListener('keydown', function escHandler(e) {
