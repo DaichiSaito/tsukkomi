@@ -6,8 +6,6 @@ module Tsukkomi
       task = Tsukkomi::Task.find(task_id)
       feedback = task.feedback
 
-      task.update!(status: "pending")
-
       task_data = {
         title: task.title,
         category: task.category,

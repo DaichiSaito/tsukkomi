@@ -27,6 +27,7 @@ module Tsukkomi
           return
         end
 
+        @task.update!(status: "pending")
         Tsukkomi::SyncToBackendJob.perform_later(@task.id)
         redirect_to admin_task_path(@task), notice: "バックエンド連携を開始しました"
       end

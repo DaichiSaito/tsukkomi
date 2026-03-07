@@ -120,8 +120,19 @@
       </div>
     <% end %>
 
-    <!-- 手動連携ボタン -->
-    <% if @task.status.in?(%w[generated pending failed]) %>
+    <!-- バックエンド連携 -->
+    <% if @task.status == "pending" %>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center gap-2 text-sm text-amber-700">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          バックエンド連携処理中...
+        </div>
+        <p class="text-xs text-gray-500 mt-2">ページを再読み込みすると最新の状態を確認できます。</p>
+      </div>
+    <% elsif @task.status.in?(%w[generated failed]) %>
       <div class="bg-white rounded-lg border border-gray-200 p-4">
         <% if Tsukkomi.configuration.backend.present? %>
           <%
