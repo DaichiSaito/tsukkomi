@@ -27,14 +27,7 @@ module Tsukkomi
         @owner = parts[0]
         @repo = parts[1]
         @token = config[:token]
-
-        if @token
-          @mode = :token
-        elsif gh_cli_available?
-          @mode = :gh
-        else
-          raise "github_issues: authentication required. Either provide :token or run `gh auth login` first."
-        end
+        @mode = resolve_github_auth_mode
       end
 
       def submit_task(task, feedback)
@@ -54,6 +47,34 @@ module Tsukkomi
       end
 
       private
+
+      def resolve_github_auth_mode
+        auth_mode = Tsukkomi.configuration.github_auth_mode
+
+        case auth_mode
+        when :token
+          unless @token
+            raise "[tsukkomi] github_auth_mode が :token ですが github_token が設定されていません。" \
+                  "環境変数 GITHUB_TOKEN を設定するか、config.github_token に値を指定してください。"
+          end
+          :token
+        when :gh_cli
+          unless gh_cli_available?
+            raise "[tsukkomi] github_auth_mode が :gh_cli ですが gh CLI が見つからないかログインされていません。" \
+                  "`gh auth login` を実行するか、github_auth_mode を :token に変更してください。"
+          end
+          :gh
+        when :auto
+          if @token
+            :token
+          elsif gh_cli_available?
+            :gh
+          else
+            raise "[tsukkomi] GitHub 認証が設定されていません。" \
+                  "config.github_auth_mode を :token または :gh_cli に設定し、必要な認証情報を用意してください。"
+          end
+        end
+      end
 
       def gh_cli_available?
         system("gh", "auth", "status", out: File::NULL, err: File::NULL)
