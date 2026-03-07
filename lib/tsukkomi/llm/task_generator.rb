@@ -10,17 +10,15 @@ module Tsukkomi
       def initialize
         config = Tsukkomi.configuration
         @model = config.claude_model
+        @mode = resolve_llm_mode(config)
 
-        if config.anthropic_api_key
-          @mode = :api
+        case @mode
+        when :api
           @client = ApiClient.new(config.anthropic_api_key)
           Rails.logger.info("[tsukkomi/llm] Mode: API (model: #{@model})")
-        elsif claude_cli_available?
-          @mode = :cli
+        when :cli
           @client = CliClient.new
           Rails.logger.info("[tsukkomi/llm] Mode: CLI (claude subprocess)")
-        else
-          raise "ANTHROPIC_API_KEY が未設定で、Claude Code CLI も見つかりません"
         end
       end
 
@@ -60,6 +58,32 @@ module Tsukkomi
 
         task[:labels] ||= [task[:category]]
         task
+      end
+
+      def resolve_llm_mode(config)
+        case config.llm_mode
+        when :api
+          unless config.anthropic_api_key
+            raise "[tsukkomi] llm_mode が :api ですが ANTHROPIC_API_KEY が設定されていません。" \
+                  "環境変数 ANTHROPIC_API_KEY を設定するか、config.anthropic_api_key に値を指定してください。"
+          end
+          :api
+        when :cli
+          unless claude_cli_available?
+            raise "[tsukkomi] llm_mode が :cli ですが Claude Code CLI (claude コマンド) が見つかりません。" \
+                  "Claude Code をインストールするか、llm_mode を :api に変更してください。"
+          end
+          :cli
+        when :auto
+          if config.anthropic_api_key
+            :api
+          elsif claude_cli_available?
+            :cli
+          else
+            raise "[tsukkomi] ANTHROPIC_API_KEY が未設定で、Claude Code CLI も見つかりません。" \
+                  "config.llm_mode を :api または :cli に設定し、必要な認証情報を用意してください。"
+          end
+        end
       end
 
       def claude_cli_available?

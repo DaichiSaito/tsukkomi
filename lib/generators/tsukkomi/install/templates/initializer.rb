@@ -1,8 +1,8 @@
 # Tsukkomi - フィードバック収集ツール設定
 #
 # 使い方:
-#   1. ANTHROPIC_API_KEY を設定（必須）
-#   2. バックエンド連携が必要なら backend / github_repo / github_token を設定
+#   1. LLM モードを設定（下記参照）
+#   2. バックエンド連携が必要なら backend / github_repo 等を設定
 #   3. rails db:migrate を実行
 #   4. ブラウザでアプリにアクセスすると右下にフィードバックボタンが表示されます
 #   5. /tsukkomi/admin で管理画面にアクセスできます
@@ -16,9 +16,20 @@ Tsukkomi.configure do |config|
   # --------------------------------------------------------------------------
   # LLM設定
   # --------------------------------------------------------------------------
-  # Anthropic API キー。フィードバックからタスクを自動生成するのに使います。
-  # ANTHROPIC_API_KEY が未設定の場合、Claude Code CLI に自動フォールバックします。
-  # （CLIモードではAPIキー不要・Claude Codeのログイン認証を使用）
+  # LLM モード（:api / :cli / :auto）
+  #
+  #   :api    — Anthropic API を使用（ANTHROPIC_API_KEY 必須）
+  #             ステージング・本番など CLI が入っていない環境向け
+  #   :cli    — Claude Code CLI を使用（claude コマンド必須、APIキー不要）
+  #             ローカル開発環境向け
+  #   :auto   — API キーがあれば :api、なければ CLI にフォールバック（デフォルト）
+  #
+  # 環境ごとの推奨設定:
+  #   development: :cli（Claude Code がインストール済みならAPIキー不要）
+  #   staging:     :api（CLI は通常インストールされていないため）
+  #   production:  :api
+  #
+  config.llm_mode = :auto
   config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
 
   # 使用するClaudeモデル（デフォルト: claude-sonnet-4-20250514）
@@ -30,18 +41,24 @@ Tsukkomi.configure do |config|
   # フィードバックから生成されたタスクを外部サービスに連携します。
   # 設定しない場合、タスクはDB保存のみ（管理画面から後で手動連携も可能）。
   #
-  # GitHub Issues に連携する場合:
-  #   config.backend = :github_issues
-  #   config.github_repo = "owner/repo"          # 例: "DaichiSaito/my-app"
-  #   config.github_token = ENV["GITHUB_TOKEN"]   # Personal Access Token
+  # ■ GitHub Issues に連携する場合
   #
-  # トークン未設定でも gh CLI がログイン済みなら自動でそちらを使います。
+  #   GitHub 認証モード（:token / :gh_cli / :auto）
+  #
+  #     :token  — Personal Access Token を使用（GITHUB_TOKEN 必須）
+  #               ステージング・本番など gh CLI が入っていない環境向け
+  #     :gh_cli — gh CLI を使用（`gh auth login` 済みであること）
+  #               ローカル開発環境向け（トークン管理不要で手軽）
+  #     :auto   — トークンがあれば :token、なければ gh CLI にフォールバック（デフォルト）
+  #
   # config.backend = :github_issues
   # config.github_repo = "owner/repo"
+  # config.github_auth_mode = :auto
   # config.github_token = ENV["GITHUB_TOKEN"]
   #
-  # vibe-kanban に連携する場合（Claude Code CLI + MCP 経由）:
+  # ■ vibe-kanban に連携する場合（Claude Code CLI + MCP 経由）
   #   事前設定: claude mcp add vibe-kanban -- npx -y vibe-kanban@latest --mcp
+  #
   # config.backend = :vibe_kanban
   # config.vibe_kanban_project = "my-project"
 

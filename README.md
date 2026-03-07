@@ -40,14 +40,16 @@ rails db:migrate
 ```ruby
 # config/initializers/tsukkomi.rb
 Tsukkomi.configure do |config|
-  # LLM設定（必須）
+  # LLM設定
+  config.llm_mode = :auto  # :api / :cli / :auto
   config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
   # config.claude_model = "claude-sonnet-4-20250514"
 
   # バックエンド連携（任意）
   # config.backend = :github_issues
   # config.github_repo = "owner/repo"
-  # config.github_token = ENV["GITHUB_TOKEN"]  # 未設定なら gh CLI を使用
+  # config.github_auth_mode = :auto  # :token / :gh_cli / :auto
+  # config.github_token = ENV["GITHUB_TOKEN"]
   # config.backend = :vibe_kanban
   # config.vibe_kanban_project_id = ENV["VIBE_KANBAN_PROJECT_ID"]
 
@@ -100,7 +102,7 @@ Rails サーバーを起動してアプリにアクセスすると、右下に�
 - Ruby 3.1+
 - Rails 7.0+
 - ActiveStorage（スクリーンショット保存用）
-- `ANTHROPIC_API_KEY`（LLM タスク生成用）
+- `ANTHROPIC_API_KEY`（llm_mode が :api の場合）または Claude Code CLI（llm_mode が :cli の場合）
 
 ## ライセンス
 
