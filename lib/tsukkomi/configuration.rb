@@ -17,7 +17,7 @@ module Tsukkomi
       @vibe_kanban_project_id = nil
       @vibe_kanban_project = nil
       @anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-      @claude_model = "claude-sonnet-4-20250514"
+      @claude_model = "claude-opus-4-6"
       @llm_mode = :auto
       @github_auth_mode = :auto
       @auto_inject = true
