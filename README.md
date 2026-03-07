@@ -43,7 +43,7 @@ Tsukkomi.configure do |config|
   # LLM設定
   config.llm_mode = :auto  # :api / :cli / :auto
   config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-  # config.claude_model = "claude-sonnet-4-20250514"
+  # config.claude_model = "claude-opus-4-6"
 
   # バックエンド連携（任意）
   # config.backend = :github_issues

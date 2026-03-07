@@ -38,8 +38,8 @@ Tsukkomi.configure do |config|
     config.github_token = ENV["GITHUB_TOKEN"]
   end
 
-  # 使用するClaudeモデル（デフォルト: claude-sonnet-4-20250514）
-  # config.claude_model = "claude-sonnet-4-20250514"
+  # 使用するClaudeモデル（デフォルト: claude-opus-4-6）
+  # config.claude_model = "claude-opus-4-6"
 
   # --------------------------------------------------------------------------
   # バックエンド連携（任意）
