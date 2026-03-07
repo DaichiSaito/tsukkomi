@@ -104,19 +104,19 @@
         <h2 class="text-sm font-medium text-gray-500 mb-3">バックエンド連携結果</h2>
         <%
           parsed_results = begin
-            res = @task.backend_results
-            res.is_a?(String) ? JSON.parse(res) : res
+            raw = @task.backend_results
+            raw.is_a?(String) ? JSON.parse(raw) : raw
           rescue
             nil
           end
-          issue_url = parsed_results&.dig("url") || parsed_results&.dig("github_issues", "result", "html_url")
+          issue_url = parsed_results&.dig("results", "github_issues", "result", "url")
         %>
         <% if issue_url.present? %>
           <div class="mb-3">
             <%= link_to issue_url, issue_url, target: "_blank", rel: "noopener", class: "text-sm text-blue-600 hover:text-blue-800 hover:underline break-all" %>
           </div>
         <% end %>
-        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= JSON.pretty_generate(@task.backend_results) rescue @task.backend_results %></pre>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><%= parsed_results ? JSON.pretty_generate(parsed_results) : @task.backend_results %></pre>
       </div>
     <% end %>
 
