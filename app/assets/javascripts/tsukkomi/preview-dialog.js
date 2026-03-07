@@ -1,5 +1,6 @@
 /**
- * Preview dialog module - Shows LLM-generated task for user confirmation before submission
+ * Preview dialog module - Shows LLM-generated task for user review
+ * Used both from the initial notification toast and from history panel
  */
 
 const CATEGORY_LABELS = {
@@ -15,8 +16,8 @@ function escapeHtml(str) {
 
 /**
  * Show a preview dialog with the LLM-generated task.
- * Returns { action: 'confirm', syncToBackend: boolean } to proceed,
- * 'retry' to go back, or null if cancelled.
+ * Returns { action: 'confirm', syncToBackend: true } to sync to backend,
+ * or null if dismissed.
  */
 export function showPreviewDialog(shadowRoot, task) {
   return new Promise((resolve) => {
@@ -58,7 +59,7 @@ export function showPreviewDialog(shadowRoot, task) {
       : '';
 
     dialog.innerHTML = `
-      <h3 style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">AIが生成したタスクを確認</h3>
+      <h3 style="margin:0 0 16px;font-size:16px;color:#1a1a1a;">AIが生成したタスク</h3>
       <div style="margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:15px;font-weight:600;color:#1a1a1a;">${escapeHtml(task.title)}</span>
@@ -67,33 +68,27 @@ export function showPreviewDialog(shadowRoot, task) {
         ${labelsHtml}
       </div>
       ${descriptionHtml}
-      <label style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:13px;color:#374151;cursor:pointer;">
-        <input type="checkbox" id="fc-sync-backend" checked style="accent-color:#2563eb;">
-        バックエンドに連携する（GitHub Issues等）
-      </label>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
-        <button id="fc-preview-retry" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;">やり直す</button>
-        <button id="fc-preview-confirm" style="padding:8px 16px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">登録する</button>
+        <button id="fc-preview-close" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;color:#666;">閉じる</button>
+        <button id="fc-preview-sync" style="padding:8px 16px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;font-size:14px;font-weight:500;">バックエンドに登録</button>
       </div>
     `;
 
     backdrop.appendChild(dialog);
     shadowRoot.appendChild(backdrop);
 
-    const syncCheckbox = dialog.querySelector('#fc-sync-backend');
-
     function cleanup() {
       backdrop.remove();
     }
 
-    dialog.querySelector('#fc-preview-confirm').addEventListener('click', () => {
+    dialog.querySelector('#fc-preview-sync').addEventListener('click', () => {
       cleanup();
-      resolve({ action: 'confirm', syncToBackend: syncCheckbox.checked });
+      resolve({ action: 'confirm', syncToBackend: true });
     });
 
-    dialog.querySelector('#fc-preview-retry').addEventListener('click', () => {
+    dialog.querySelector('#fc-preview-close').addEventListener('click', () => {
       cleanup();
-      resolve('retry');
+      resolve(null);
     });
 
     backdrop.addEventListener('click', (e) => {
@@ -103,7 +98,6 @@ export function showPreviewDialog(shadowRoot, task) {
       }
     });
 
-    // Escape key to cancel
     function onKeyDown(e) {
       if (e.key === 'Escape') {
         cleanup();

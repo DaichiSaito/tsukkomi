@@ -5,26 +5,28 @@ module Tsukkomi
     def perform(feedback_id)
       feedback = Tsukkomi::Feedback.find(feedback_id)
 
-      generator = Tsukkomi::Llm::TaskGenerator.new
-      result = generator.generate(build_feedback_data(feedback))
-
-      task = feedback.create_task!(
-        title: result["title"] || result[:title],
-        category: result["category"] || result[:category],
-        description: result["description"] || result[:description],
-        labels: result["labels"] || result[:labels],
-        status: "pending"
+      # Create a placeholder task with "processing" status
+      task = feedback.task || feedback.create_task!(
+        title: "処理中...",
+        category: "improvement",
+        description: "",
+        status: "processing"
       )
 
-      return unless Tsukkomi.configuration.backend.present?
-
       begin
-        backend_results = Tsukkomi::Backends::Registry.submit_to_all(
-          result, build_feedback_data(feedback)
+        generator = Tsukkomi::Llm::TaskGenerator.new
+        result = generator.generate(build_feedback_data(feedback))
+
+        task.update!(
+          title: result["title"] || result[:title],
+          category: result["category"] || result[:category],
+          description: result["description"] || result[:description],
+          labels: result["labels"] || result[:labels],
+          status: "generated"
         )
-        task.update!(status: "synced", backend_results: backend_results.to_json, synced_at: Time.current)
       rescue => e
         task.update!(status: "failed", backend_results: { error: e.message }.to_json)
+        raise
       end
     end
 
