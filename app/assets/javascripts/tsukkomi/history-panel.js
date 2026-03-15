@@ -53,7 +53,7 @@ function escapeHtml(str) {
 function buildStatusBadge(status) {
   const s = STATUS_LABELS[status] || { label: status || '不明', color: '#6b7280', bg: '#f3f4f6' };
   const isAnimated = status === 'processing' || status === 'pending';
-  return `<span style="font-size:10px;padding:2px 6px;border-radius:9999px;background:${s.bg};color:${s.color};font-weight:500;${isAnimated ? 'animation:fc-pulse 1.5s ease-in-out infinite;' : ''}">${s.label}</span>`;
+  return `<span style="font-size:10px;padding:2px 6px;border-radius:9999px;background:${s.bg};color:${s.color};font-weight:500;white-space:nowrap;flex-shrink:0;${isAnimated ? 'animation:fc-pulse 1.5s ease-in-out infinite;' : ''}">${s.label}</span>`;
 }
 
 function getSyncLabel(backend) {
