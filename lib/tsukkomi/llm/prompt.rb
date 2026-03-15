@@ -8,7 +8,7 @@ module Tsukkomi
       def build_api_prompt(feedback, has_screenshot, has_cropped_screenshot: false)
         custom = Tsukkomi.configuration.task_prompt
         if custom.is_a?(Proc)
-          return custom.call(feedback, has_screenshot)
+          return custom.call(feedback, has_screenshot, has_cropped_screenshot)
         end
 
         comment = feedback[:comment]
@@ -101,7 +101,7 @@ module Tsukkomi
       def build_cli_prompt(feedback, screenshot_path, cropped_screenshot_path: nil)
         custom = Tsukkomi.configuration.task_prompt
         if custom.is_a?(Proc)
-          return custom.call(feedback, !!screenshot_path)
+          return custom.call(feedback, !!screenshot_path, !!cropped_screenshot_path)
         end
 
         comment = feedback[:comment]
