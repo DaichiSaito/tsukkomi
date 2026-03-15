@@ -12,26 +12,29 @@ module Tsukkomi
 
       def generate_task(feedback, model:, prompt:)
         # Build content blocks for the API request
-        has_image = false
-        if feedback[:screenshot]
-          match = feedback[:screenshot].match(/\Adata:image\/(png|jpeg|gif|webp);base64,(.+)\z/m)
+        content = []
+
+        # Add cropped screenshot first (user's focus area)
+        if feedback[:cropped_screenshot]
+          match = feedback[:cropped_screenshot].match(/\Adata:image\/(png|jpeg|gif|webp);base64,(.+)\z/m)
           if match
-            has_image = true
-            @image_media_type = "image/#{match[1]}"
-            @image_data = match[2]
+            content << { type: "image", source: { type: "base64", media_type: "image/#{match[1]}", data: match[2] } }
           end
         end
 
-        if has_image
-          content = [
-            { type: "image", source: { type: "base64", media_type: @image_media_type, data: @image_data } },
-            { type: "text", text: prompt }
-          ]
-        else
-          content = prompt
+        # Add full screenshot for context
+        if feedback[:screenshot]
+          match = feedback[:screenshot].match(/\Adata:image\/(png|jpeg|gif|webp);base64,(.+)\z/m)
+          if match
+            content << { type: "image", source: { type: "base64", media_type: "image/#{match[1]}", data: match[2] } }
+          end
         end
 
-        Rails.logger.info("[tsukkomi/llm] Calling Anthropic API (model: #{model}, image: #{has_image})")
+        has_image = content.any?
+        content << { type: "text", text: prompt }
+        content = prompt unless has_image
+
+        Rails.logger.info("[tsukkomi/llm] Calling Anthropic API (model: #{model}, image: #{has_image}, cropped: #{!!feedback[:cropped_screenshot]})")
 
         response = @client.messages.create(
           model: model,

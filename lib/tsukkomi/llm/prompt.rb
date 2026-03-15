@@ -5,7 +5,7 @@ module Tsukkomi
     module Prompt
       module_function
 
-      def build_api_prompt(feedback, has_screenshot)
+      def build_api_prompt(feedback, has_screenshot, has_cropped_screenshot: false)
         custom = Tsukkomi.configuration.task_prompt
         if custom.is_a?(Proc)
           return custom.call(feedback, has_screenshot)
@@ -31,7 +31,16 @@ module Tsukkomi
           "不明"
         end
 
-        screenshot_section = if has_screenshot
+        screenshot_section = if has_cropped_screenshot && has_screenshot
+          <<~SECTION
+
+            ## スクリーンショット
+
+            2つの画像が添付されています。
+            1枚目: ユーザーが選択した範囲を切り取った画像（クロップ画像）— ユーザーが最も注目している箇所です。この画像を重点的に分析してください。
+            2枚目: 画面全体のスクリーンショット — 周囲のコンテキストを把握するために参照してください。
+          SECTION
+        elsif has_screenshot
           <<~SECTION
 
             ## スクリーンショット
@@ -89,7 +98,7 @@ module Tsukkomi
         prompt
       end
 
-      def build_cli_prompt(feedback, screenshot_path)
+      def build_cli_prompt(feedback, screenshot_path, cropped_screenshot_path: nil)
         custom = Tsukkomi.configuration.task_prompt
         if custom.is_a?(Proc)
           return custom.call(feedback, !!screenshot_path)
@@ -115,7 +124,16 @@ module Tsukkomi
           "不明"
         end
 
-        screenshot_section = if screenshot_path
+        screenshot_section = if cropped_screenshot_path && screenshot_path
+          <<~SECTION
+
+            ## スクリーンショット
+
+            以下の2つの画像を Read ツールで読み取り、分析してください。
+            1. クロップ画像（ユーザーが選択した範囲）— 重点的に分析してください: #{cropped_screenshot_path}
+            2. 画面全体のスクリーンショット — コンテキスト把握用: #{screenshot_path}
+          SECTION
+        elsif screenshot_path
           <<~SECTION
 
             ## スクリーンショット

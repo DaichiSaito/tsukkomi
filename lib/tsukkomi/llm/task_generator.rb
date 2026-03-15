@@ -35,7 +35,8 @@ module Tsukkomi
 
       def generate_via_api(feedback)
         has_screenshot = !!(feedback[:screenshot] && feedback[:screenshot].match?(/\Adata:image\//))
-        prompt = Prompt.build_api_prompt(feedback, has_screenshot)
+        has_cropped_screenshot = !!(feedback[:cropped_screenshot] && feedback[:cropped_screenshot].match?(/\Adata:image\//))
+        prompt = Prompt.build_api_prompt(feedback, has_screenshot, has_cropped_screenshot: has_cropped_screenshot)
 
         task = @client.generate_task(feedback, model: @model, prompt: prompt)
 
@@ -44,7 +45,8 @@ module Tsukkomi
 
       def generate_via_cli(feedback)
         has_screenshot = !!(feedback[:screenshot] && feedback[:screenshot].match?(/\Adata:image\//))
-        prompt = Prompt.build_api_prompt(feedback, has_screenshot)
+        has_cropped_screenshot = !!(feedback[:cropped_screenshot] && feedback[:cropped_screenshot].match?(/\Adata:image\//))
+        prompt = Prompt.build_api_prompt(feedback, has_screenshot, has_cropped_screenshot: has_cropped_screenshot)
 
         task = @client.generate_task(feedback, prompt: prompt)
 

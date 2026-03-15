@@ -31,8 +31,9 @@ module Tsukkomi
       end
 
       def submit_task(task, feedback)
+        cropped_screenshot_url = upload_screenshot(feedback[:cropped_screenshot], prefix: "cropped")
         screenshot_url = upload_screenshot(feedback[:screenshot])
-        body = build_issue_body(task, feedback, screenshot_url)
+        body = build_issue_body(task, feedback, screenshot_url, cropped_screenshot_url)
 
         label = CATEGORY_LABELS[(task[:category] || "").downcase]
         labels = label ? [label] : []
@@ -135,7 +136,7 @@ module Tsukkomi
         raise "gh api: invalid JSON response: #{stdout[0, 200]}"
       end
 
-      def upload_screenshot(screenshot_data_url)
+      def upload_screenshot(screenshot_data_url, prefix: "screenshot")
         return nil unless screenshot_data_url
 
         match = screenshot_data_url.match(/\Adata:image\/([\w+]+);base64,(.+)\z/)
@@ -144,7 +145,7 @@ module Tsukkomi
         ext = match[1] == "jpeg" ? "jpg" : match[1]
         base64_content = match[2]
         hash = Digest::MD5.hexdigest(base64_content[0, 1000])[0, 8]
-        filename = "#{Time.now.to_i}-#{hash}.#{ext}"
+        filename = "#{prefix}-#{Time.now.to_i}-#{hash}.#{ext}"
         file_path = ".github/feedback-screenshots/#{filename}"
 
         begin
@@ -159,14 +160,22 @@ module Tsukkomi
         end
       end
 
-      def build_issue_body(task, feedback, screenshot_url)
+      def build_issue_body(task, feedback, screenshot_url, cropped_screenshot_url = nil)
         lines = []
         lines << (task[:description] || "")
         lines << ""
 
-        if screenshot_url
+        if cropped_screenshot_url || screenshot_url
           lines << "## Screenshot"
-          lines << "![screenshot](#{screenshot_url})"
+          if cropped_screenshot_url
+            lines << "### 選択範囲"
+            lines << "![cropped](#{cropped_screenshot_url})"
+            lines << ""
+          end
+          if screenshot_url
+            lines << "### 画面全体"
+            lines << "![screenshot](#{screenshot_url})"
+          end
           lines << ""
         end
 

@@ -273,13 +273,14 @@ import { createHistoryPanel } from './history-panel.js';
       if (!annotation) return;
 
       // 3. Show comment form
-      const comment = await showCommentForm(shadow, screenshotDataUrl, annotation.coordinates);
-      if (!comment) return;
+      const result = await showCommentForm(shadow, screenshotDataUrl, annotation.coordinates);
+      if (!result) return;
 
       // 4. Collect metadata
       const payload = {
         screenshot: screenshotDataUrl,
-        comment: comment,
+        cropped_screenshot: result.croppedScreenshot,
+        comment: result.comment,
         page_url: window.location.pathname + window.location.search,
         selector: annotation.selector,
         coordinates: annotation.coordinates,

@@ -19,7 +19,9 @@ module Tsukkomi
         selector: feedback.selector,
         coordinates: feedback.coordinates,
         browser: feedback.browser,
-        viewport: feedback.viewport
+        viewport: feedback.viewport,
+        screenshot: feedback.screenshot.attached? ? blob_to_data_url(feedback.screenshot) : nil,
+        cropped_screenshot: feedback.cropped_screenshot.attached? ? blob_to_data_url(feedback.cropped_screenshot) : nil
       }
 
       begin
@@ -29,6 +31,16 @@ module Tsukkomi
         task.update!(status: "failed", backend_results: { error: e.message }.to_json)
         raise
       end
+    end
+
+    private
+
+    def blob_to_data_url(attachment)
+      blob = attachment.blob
+      content_type = blob.content_type
+      data = blob.download
+      encoded = Base64.strict_encode64(data)
+      "data:#{content_type};base64,#{encoded}"
     end
   end
 end

@@ -30,6 +30,8 @@ function cropScreenshot(screenshotDataUrl, coords) {
   });
 }
 
+export { cropScreenshot };
+
 export function showCommentForm(shadowRoot, screenshotDataUrl, coordinates) {
   return new Promise(async (resolve) => {
     // Crop the selected area for the thumbnail
@@ -108,7 +110,7 @@ export function showCommentForm(shadowRoot, screenshotDataUrl, coordinates) {
         return;
       }
       cleanup();
-      resolve(comment);
+      resolve({ comment, croppedScreenshot: thumbnailSrc });
     });
 
     textarea.addEventListener('keydown', (e) => {

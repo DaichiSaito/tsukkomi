@@ -20,6 +20,7 @@ module Tsukkomi
         end
 
         attach_screenshot(feedback)
+        attach_cropped_screenshot(feedback)
 
         Tsukkomi::ProcessFeedbackJob.perform_later(feedback.id)
         render json: { feedbackId: feedback.id, status: "accepted" }, status: :accepted
@@ -94,6 +95,22 @@ module Tsukkomi
         )
       end
 
+      def attach_cropped_screenshot(feedback)
+        cropped_data = params[:cropped_screenshot]
+        return unless cropped_data.present? && cropped_data.is_a?(String) && cropped_data.include?("base64,")
+
+        mime_type, encoded = cropped_data.split(",", 2)
+        content_type = mime_type[/data:(.*?);/, 1] || "image/png"
+        extension = content_type == "image/jpeg" ? "jpg" : "png"
+        decoded = Base64.decode64(encoded)
+
+        feedback.cropped_screenshot.attach(
+          io: StringIO.new(decoded),
+          filename: "cropped_screenshot_#{feedback.id}.#{extension}",
+          content_type: content_type
+        )
+      end
+
       def serialize_feedback(feedback)
         {
           id: feedback.id,
@@ -105,6 +122,7 @@ module Tsukkomi
           viewport: feedback.viewport,
           submittedAt: feedback.submitted_at&.iso8601,
           hasScreenshot: feedback.screenshot.attached?,
+          hasCroppedScreenshot: feedback.cropped_screenshot.attached?,
           task: feedback.task ? {
             id: feedback.task.id,
             title: feedback.task.title,

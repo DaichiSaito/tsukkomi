@@ -41,12 +41,13 @@ module Tsukkomi
         browser: feedback.browser,
         viewport: feedback.viewport,
         timestamp: feedback.submitted_at&.iso8601,
-        screenshot: feedback.screenshot.attached? ? screenshot_data_url(feedback) : nil
+        screenshot: feedback.screenshot.attached? ? blob_to_data_url(feedback.screenshot) : nil,
+        cropped_screenshot: feedback.cropped_screenshot.attached? ? blob_to_data_url(feedback.cropped_screenshot) : nil
       }
     end
 
-    def screenshot_data_url(feedback)
-      blob = feedback.screenshot.blob
+    def blob_to_data_url(attachment)
+      blob = attachment.blob
       content_type = blob.content_type
       data = blob.download
       encoded = Base64.strict_encode64(data)
