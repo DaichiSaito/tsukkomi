@@ -3,6 +3,7 @@
 require "open3"
 require "json"
 require "tempfile"
+require_relative "json_repair"
 
 module Tsukkomi
   module Llm
@@ -42,7 +43,7 @@ module Tsukkomi
             raise "Could not parse JSON from claude response"
           end
 
-          JSON.parse(json_match[0], symbolize_names: true)
+          JsonRepair.parse_lenient(json_match[0])
         ensure
           File.delete(screenshot_path) if screenshot_path && File.exist?(screenshot_path)
           File.delete(cropped_path) if cropped_path && File.exist?(cropped_path)

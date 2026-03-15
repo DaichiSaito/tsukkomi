@@ -2,6 +2,7 @@
 
 require "anthropic"
 require "json"
+require_relative "json_repair"
 
 module Tsukkomi
   module Llm
@@ -58,7 +59,7 @@ module Tsukkomi
           raise "Could not parse JSON from API response: #{text[0, 200]}"
         end
 
-        JSON.parse(json_match[0], symbolize_names: true)
+        JsonRepair.parse_lenient(json_match[0])
       end
     end
   end
