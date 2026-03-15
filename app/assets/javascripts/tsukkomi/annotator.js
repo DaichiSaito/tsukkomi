@@ -70,6 +70,8 @@ export function createAnnotator() {
       flexShrink: '0',
     });
     cancelBtn.textContent = 'キャンセル';
+    cancelBtn.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+    cancelBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); });
     cancelBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       cleanup();
