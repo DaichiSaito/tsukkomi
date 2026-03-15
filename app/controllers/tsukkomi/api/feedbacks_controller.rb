@@ -65,6 +65,7 @@ module Tsukkomi
           return render json: { error: "No backend configured" }, status: :unprocessable_entity
         end
 
+        task.update!(status: "pending")
         Tsukkomi::SyncToBackendJob.perform_later(task.id)
         render json: { feedbackId: @feedback.id, taskId: task.id, status: "syncing" }
       end

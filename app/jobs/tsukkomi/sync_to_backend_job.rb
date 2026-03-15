@@ -26,7 +26,12 @@ module Tsukkomi
 
       begin
         backend_results = Tsukkomi::Backends::Registry.submit_to_all(task_data, feedback_data)
-        task.update!(status: "synced", backend_results: backend_results.to_json, synced_at: Time.current)
+
+        if backend_results[:any_succeeded]
+          task.update!(status: "synced", backend_results: backend_results.to_json, synced_at: Time.current)
+        else
+          task.update!(status: "failed", backend_results: backend_results.to_json)
+        end
       rescue => e
         task.update!(status: "failed", backend_results: { error: e.message }.to_json)
         raise
