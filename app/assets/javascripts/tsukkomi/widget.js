@@ -12,9 +12,13 @@ import { createHistoryPanel } from './history-panel.js';
 (function () {
   // Read config from script tag data attributes
   const currentScript = document.currentScript;
+  const apiBase = currentScript?.getAttribute('data-api-base') || '/tsukkomi';
+
+  // Don't show widget on tsukkomi admin pages
+  if (window.location.pathname.startsWith(apiBase + '/admin')) return;
+
   const reporter = currentScript?.getAttribute('data-reporter') || 'anonymous';
   const position = currentScript?.getAttribute('data-position') || 'bottom-right';
-  const apiBase = currentScript?.getAttribute('data-api-base') || '/tsukkomi';
   const backend = currentScript?.getAttribute('data-backend') || '';
 
   // Create Shadow DOM host
