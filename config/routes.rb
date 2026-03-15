@@ -14,7 +14,7 @@ Tsukkomi::Engine.routes.draw do
 
   # Admin
   namespace :admin do
-    resources :tasks, only: [:index, :show, :update] do
+    resources :tasks, only: [:index, :show, :update, :destroy] do
       member do
         post :sync_to_backend
       end

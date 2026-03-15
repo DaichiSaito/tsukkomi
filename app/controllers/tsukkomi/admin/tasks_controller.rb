@@ -28,6 +28,12 @@ module Tsukkomi
         end
       end
 
+      def destroy
+        @task = Tsukkomi::Task.find(params[:id])
+        @task.feedback&.destroy
+        redirect_to admin_tasks_path, notice: "タスクを削除しました"
+      end
+
       def sync_to_backend
         @task = Tsukkomi::Task.includes(:feedback).find(params[:id])
 
