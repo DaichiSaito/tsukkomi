@@ -143,13 +143,21 @@ export function createAnnotator() {
       });
     }
 
+    function isFromCancelBtn(e) {
+      return e.target === cancelBtn || cancelBtn.contains(e.target);
+    }
+
     // Mouse events
-    overlay.addEventListener('mousedown', (e) => onPointerStart(e.clientX, e.clientY));
+    overlay.addEventListener('mousedown', (e) => {
+      if (isFromCancelBtn(e)) return;
+      onPointerStart(e.clientX, e.clientY);
+    });
     overlay.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
     overlay.addEventListener('mouseup', (e) => onPointerEnd(e.clientX, e.clientY));
 
     // Touch events
     overlay.addEventListener('touchstart', (e) => {
+      if (isFromCancelBtn(e)) return;
       e.preventDefault();
       const t = e.touches[0];
       onPointerStart(t.clientX, t.clientY);
@@ -160,6 +168,7 @@ export function createAnnotator() {
       onPointerMove(t.clientX, t.clientY);
     }, { passive: false });
     overlay.addEventListener('touchend', (e) => {
+      if (isFromCancelBtn(e)) return;
       e.preventDefault();
       const t = e.changedTouches[0];
       onPointerEnd(t.clientX, t.clientY);
