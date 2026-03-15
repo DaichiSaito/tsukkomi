@@ -30,28 +30,68 @@ export function createAnnotator() {
     });
     overlay.appendChild(selection);
 
-    const hint = document.createElement('div');
-    Object.assign(hint.style, {
+    // Top bar with hint and cancel button
+    const topBar = document.createElement('div');
+    Object.assign(topBar.style, {
       position: 'absolute',
       top: '16px',
       left: '50%',
       transform: 'translateX(-50%)',
       background: 'rgba(0,0,0,0.7)',
       color: '#fff',
-      padding: '8px 20px',
+      padding: '8px 16px',
       borderRadius: '6px',
       fontSize: '14px',
       fontFamily: 'sans-serif',
-      pointerEvents: 'none',
       zIndex: '1',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
     });
+
+    const hint = document.createElement('span');
+    hint.style.pointerEvents = 'none';
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     hint.textContent = isTouchDevice
-      ? 'ドラッグで範囲を選択してください'
-      : 'ドラッグで範囲を選択してください（ESCでキャンセル）';
-    overlay.appendChild(hint);
+      ? 'ドラッグで範囲を選択'
+      : 'ドラッグで範囲を選択（ESCでキャンセル）';
+    topBar.appendChild(hint);
+
+    const cancelBtn = document.createElement('button');
+    Object.assign(cancelBtn.style, {
+      background: 'rgba(255,255,255,0.2)',
+      border: '1px solid rgba(255,255,255,0.4)',
+      color: '#fff',
+      borderRadius: '4px',
+      padding: '2px 10px',
+      fontSize: '13px',
+      cursor: 'pointer',
+      fontFamily: 'sans-serif',
+      flexShrink: '0',
+    });
+    cancelBtn.textContent = 'キャンセル';
+    cancelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cleanup();
+      resolve(null);
+    });
+    topBar.appendChild(cancelBtn);
+
+    overlay.appendChild(topBar);
 
     let startX = 0, startY = 0, isDragging = false;
+
+    function escHandler(e) {
+      if (e.key === 'Escape') {
+        cleanup();
+        resolve(null);
+      }
+    }
+
+    function cleanup() {
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
 
     function onPointerStart(clientX, clientY) {
       startX = clientX;
@@ -90,7 +130,7 @@ export function createAnnotator() {
         return;
       }
 
-      overlay.remove();
+      cleanup();
 
       const centerEl = document.elementFromPoint(x + w / 2, y + h / 2);
       const selector = centerEl ? getCssSelector(centerEl) : '';
@@ -123,13 +163,7 @@ export function createAnnotator() {
       onPointerEnd(t.clientX, t.clientY);
     });
 
-    document.addEventListener('keydown', function escHandler(e) {
-      if (e.key === 'Escape') {
-        overlay.remove();
-        document.removeEventListener('keydown', escHandler);
-        resolve(null); // cancelled
-      }
-    });
+    document.addEventListener('keydown', escHandler);
 
     document.body.appendChild(overlay);
   });
