@@ -34,17 +34,18 @@ import { createHistoryPanel } from './history-panel.js';
   const shadow = host.attachShadow({ mode: 'closed' });
 
   // Create floating button
+  const isMobile = window.innerWidth <= 768;
   const btn = document.createElement('button');
   Object.assign(btn.style, {
-    width: '56px',
-    height: '56px',
+    width: isMobile ? '44px' : '56px',
+    height: isMobile ? '44px' : '56px',
     borderRadius: '50%',
     border: 'none',
     background: '#2563eb',
     color: '#fff',
     cursor: 'pointer',
     boxShadow: '0 4px 14px rgba(37,99,235,0.4)',
-    fontSize: '24px',
+    fontSize: isMobile ? '18px' : '24px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -68,15 +69,15 @@ import { createHistoryPanel } from './history-panel.js';
   // History button (small icon above the main button)
   const historyBtn = document.createElement('button');
   Object.assign(historyBtn.style, {
-    width: '36px',
-    height: '36px',
+    width: isMobile ? '28px' : '36px',
+    height: isMobile ? '28px' : '36px',
     borderRadius: '50%',
     border: 'none',
     background: '#f3f4f6',
     color: '#6b7280',
     cursor: 'pointer',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    fontSize: '16px',
+    fontSize: isMobile ? '12px' : '16px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
