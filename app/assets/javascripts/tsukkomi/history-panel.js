@@ -100,9 +100,9 @@ function buildFeedbackCard(entry, apiBase, backend) {
         </span>
         ${task ? `<span style="flex-shrink:0;font-size:11px;padding:2px 8px;border-radius:9999px;background:${cat.bg};color:${cat.color};font-weight:500;">${cat.label}</span>` : ''}
       </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-        ${task ? buildStatusBadge(status) : '<span style="font-size:10px;padding:2px 6px;border-radius:9999px;background:#fffbeb;color:#f59e0b;font-weight:500;">受付済み</span>'}
-        <span style="font-size:12px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:nowrap;">
+        ${task ? buildStatusBadge(status) : '<span style="font-size:10px;padding:2px 6px;border-radius:9999px;background:#fffbeb;color:#f59e0b;font-weight:500;white-space:nowrap;flex-shrink:0;">受付済み</span>'}
+        <span style="font-size:12px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">
           ${escapeHtml(entry.comment)}
         </span>
       </div>
