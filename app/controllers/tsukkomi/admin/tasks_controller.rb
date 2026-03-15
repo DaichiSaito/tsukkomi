@@ -19,6 +19,15 @@ module Tsukkomi
         @task = Tsukkomi::Task.includes(:feedback).find(params[:id])
       end
 
+      def update
+        @task = Tsukkomi::Task.find(params[:id])
+        if @task.update(task_params)
+          redirect_to admin_task_path(@task), notice: "タスクを更新しました"
+        else
+          redirect_to admin_task_path(@task), alert: @task.errors.full_messages.join(", ")
+        end
+      end
+
       def sync_to_backend
         @task = Tsukkomi::Task.includes(:feedback).find(params[:id])
 
@@ -30,6 +39,11 @@ module Tsukkomi
         @task.update!(status: "pending")
         Tsukkomi::SyncToBackendJob.perform_later(@task.id)
         redirect_to admin_task_path(@task), notice: "バックエンド連携を開始しました"
+      end
+      private
+
+      def task_params
+        params.require(:task).permit(:title, :category, :description)
       end
     end
   end
