@@ -90,9 +90,7 @@ module Tsukkomi
         decoded = Base64.decode64(encoded)
 
         feedback.screenshot.attach(
-          io: StringIO.new(decoded),
-          filename: "screenshot_#{feedback.id}.#{extension}",
-          content_type: content_type
+          create_blob(decoded, "screenshot_#{feedback.id}.#{extension}", content_type)
         )
       end
 
@@ -106,10 +104,19 @@ module Tsukkomi
         decoded = Base64.decode64(encoded)
 
         feedback.cropped_screenshot.attach(
-          io: StringIO.new(decoded),
-          filename: "cropped_screenshot_#{feedback.id}.#{extension}",
-          content_type: content_type
+          create_blob(decoded, "cropped_screenshot_#{feedback.id}.#{extension}", content_type)
         )
+      end
+
+      def create_blob(decoded, filename, content_type)
+        service_name = Tsukkomi.configuration.storage_service
+        blob_params = {
+          io: StringIO.new(decoded),
+          filename: filename,
+          content_type: content_type
+        }
+        blob_params[:service_name] = service_name if service_name
+        ActiveStorage::Blob.create_and_upload!(**blob_params)
       end
 
       def serialize_feedback(feedback)

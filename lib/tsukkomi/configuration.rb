@@ -6,7 +6,8 @@ module Tsukkomi
     attr_accessor :backend, :github_repo, :github_token,
                   :vibe_kanban_project_id, :vibe_kanban_project,
                   :anthropic_api_key, :claude_model,
-                  :auto_inject, :reporter, :task_prompt
+                  :auto_inject, :reporter, :task_prompt,
+                  :storage_service
 
     attr_reader :llm_mode, :github_auth_mode
 
@@ -23,6 +24,7 @@ module Tsukkomi
       @auto_inject = true
       @reporter = "anonymous"
       @task_prompt = nil
+      @storage_service = nil
     end
 
     def llm_mode=(mode)
