@@ -5,6 +5,7 @@ module Tsukkomi
         @tasks = Tsukkomi::Task.includes(:feedback)
                    .by_status(params[:status])
                    .by_category(params[:category])
+                   .by_resolution(params[:resolution])
                    .search(params[:q])
                    .recent
 
@@ -32,6 +33,24 @@ module Tsukkomi
         @task = Tsukkomi::Task.find(params[:id])
         @task.feedback&.destroy
         redirect_to admin_tasks_path, notice: "タスクを削除しました"
+      end
+
+      def close
+        @task = Tsukkomi::Task.find(params[:id])
+        @task.close!
+        redirect_to admin_task_path(@task), notice: "タスクをクローズしました"
+      end
+
+      def wontfix
+        @task = Tsukkomi::Task.find(params[:id])
+        @task.wontfix!
+        redirect_to admin_task_path(@task), notice: "タスクを「やらない」に変更しました"
+      end
+
+      def reopen
+        @task = Tsukkomi::Task.find(params[:id])
+        @task.reopen!
+        redirect_to admin_task_path(@task), notice: "タスクをリオープンしました"
       end
 
       def sync_to_backend

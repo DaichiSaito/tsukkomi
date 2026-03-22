@@ -1,0 +1,7 @@
+class AddResolutionToTsukkomiTasks < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    add_column :tsukkomi_tasks, :resolution, :string, default: "open", null: false
+    add_column :tsukkomi_tasks, :closed_at, :datetime
+    add_index :tsukkomi_tasks, :resolution
+  end
+end
