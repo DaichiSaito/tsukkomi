@@ -17,6 +17,9 @@ Tsukkomi::Engine.routes.draw do
     resources :tasks, only: [:index, :show, :update, :destroy] do
       member do
         post :sync_to_backend
+        post :close
+        post :wontfix
+        post :reopen
       end
     end
     root to: "tasks#index"

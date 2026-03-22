@@ -23,6 +23,15 @@
         <% end %>
       </select>
     </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">解決状況</label>
+      <select name="resolution" class="block w-40 rounded-md border-gray-300 bg-gray-50 text-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+        <option value="">全て</option>
+        <% { "open" => "オープン", "closed" => "クローズ", "wontfix" => "やらない" }.each do |val, label| %>
+          <option value="<%= val %>" <%= "selected" if params[:resolution] == val %>><%= label %></option>
+        <% end %>
+      </select>
+    </div>
     <div class="flex-1 min-w-[200px]">
       <label class="block text-xs font-medium text-gray-500 mb-1">検索</label>
       <input type="text" name="q" value="<%= params[:q] %>" placeholder="タイトル・説明を検索..."
@@ -44,6 +53,7 @@
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">タイトル</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">解決状況</th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">作成日時</th>
           <th class="px-4 py-3"></th>
         </tr>
@@ -60,6 +70,11 @@
             <td class="px-4 py-3 text-sm">
               <% status_colors = { "processing" => "bg-amber-100 text-amber-800", "generated" => "bg-blue-100 text-blue-800", "pending" => "bg-yellow-100 text-yellow-800", "synced" => "bg-green-100 text-green-800", "failed" => "bg-red-100 text-red-800" } %>
               <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= status_colors[task.status] %>"><%= task.status %></span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% resolution_colors = { "open" => "bg-green-100 text-green-800", "closed" => "bg-gray-100 text-gray-800", "wontfix" => "bg-orange-100 text-orange-800" } %>
+              <% resolution_labels = { "open" => "オープン", "closed" => "クローズ", "wontfix" => "やらない" } %>
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= resolution_colors[task.resolution] %>"><%= resolution_labels[task.resolution] || task.resolution %></span>
             </td>
             <td class="px-4 py-3 text-sm text-gray-500"><%= task.created_at.strftime("%Y-%m-%d %H:%M") %></td>
             <td class="px-4 py-3 text-sm text-right">
@@ -78,11 +93,11 @@
       <p class="text-sm text-gray-500"><%= @total %>件中 <%= (@page - 1) * @per_page + 1 %>〜<%= [@page * @per_page, @total].min %>件</p>
       <div class="flex gap-2">
         <% if @page > 1 %>
-          <%= link_to "前へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], q: params[:q], page: @page - 1),
+          <%= link_to "前へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], resolution: params[:resolution], q: params[:q], page: @page - 1),
                 class: "px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition" %>
         <% end %>
         <% if @page < total_pages %>
-          <%= link_to "次へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], q: params[:q], page: @page + 1),
+          <%= link_to "次へ", tsukkomi.admin_tasks_path(status: params[:status], category: params[:category], resolution: params[:resolution], q: params[:q], page: @page + 1),
                 class: "px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition" %>
         <% end %>
       </div>
