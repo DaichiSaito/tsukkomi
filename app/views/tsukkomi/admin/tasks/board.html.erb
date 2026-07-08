@@ -45,3 +45,48 @@
     </div>
   <% end %>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script>
+  (function () {
+    if (typeof Sortable === 'undefined') return;
+
+    function updateCounts() {
+      document.querySelectorAll('[data-resolution]').forEach(function (list) {
+        var count = list.querySelectorAll('[data-task-id]').length;
+        var badge = list.parentElement.querySelector('[data-count]');
+        if (badge) badge.textContent = count;
+        var empty = list.querySelector('[data-empty]');
+        if (empty) empty.classList.toggle('hidden', count !== 0);
+      });
+    }
+
+    document.querySelectorAll('[data-resolution]').forEach(function (list) {
+      new Sortable(list, {
+        group: 'tsukkomi-tasks',
+        draggable: '[data-task-id]',
+        animation: 150,
+        onEnd: function (evt) {
+          var newResolution = evt.to.getAttribute('data-resolution');
+          var oldResolution = evt.from.getAttribute('data-resolution');
+          updateCounts();
+          if (newResolution === oldResolution) return;
+          var url = evt.item.getAttribute('data-move-url');
+          fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolution: newResolution })
+          }).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+          }).catch(function (err) {
+            console.error('[tsukkomi] move failed:', err);
+            alert('解決状況の変更に失敗しました。ページを再読み込みします。');
+            location.reload();
+          });
+        }
+      });
+    });
+
+    updateCounts();
+  })();
+</script>
