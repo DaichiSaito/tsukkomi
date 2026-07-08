@@ -3,8 +3,6 @@ module Tsukkomi
     class TasksController < Tsukkomi::ApplicationController
       def index
         @tasks = Tsukkomi::Task.includes(:feedback)
-                   .by_status(params[:status])
-                   .by_category(params[:category])
                    .by_resolution(params[:resolution])
                    .search(params[:q])
                    .recent
