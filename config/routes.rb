@@ -20,6 +20,10 @@ Tsukkomi::Engine.routes.draw do
         post :close
         post :wontfix
         post :reopen
+        post :move
+      end
+      collection do
+        get :board
       end
     end
     root to: "tasks#index"

@@ -1,0 +1,7 @@
+<%# local: active (:list | :board) %>
+<div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-sm">
+  <%= link_to "リスト", tsukkomi.admin_tasks_path,
+        class: "px-3 py-1.5 #{active == :list ? "bg-gray-900 text-white" : "bg-white text-gray-700 hover:bg-gray-100"}" %>
+  <%= link_to "カンバン", tsukkomi.board_admin_tasks_path,
+        class: "px-3 py-1.5 border-l border-gray-300 #{active == :board ? "bg-gray-900 text-white" : "bg-white text-gray-700 hover:bg-gray-100"}" %>
+</div>

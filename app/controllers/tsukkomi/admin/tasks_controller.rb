@@ -14,6 +14,10 @@ module Tsukkomi
         @tasks = @tasks.offset((@page - 1) * @per_page).limit(@per_page)
       end
 
+      def board
+        @tasks_by_resolution = Tsukkomi::Task.includes(:feedback).recent.group_by(&:resolution)
+      end
+
       def show
         @task = Tsukkomi::Task.includes(:feedback).find(params[:id])
       end

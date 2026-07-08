@@ -1,0 +1,47 @@
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-2xl font-bold text-gray-900">タスク一覧</h1>
+  <%= render "view_toggle", active: :board %>
+</div>
+
+<%
+  columns = [
+    { key: "open",    label: "オープン", color: "bg-green-100 text-green-800" },
+    { key: "closed",  label: "クローズ", color: "bg-gray-100 text-gray-800" },
+    { key: "wontfix", label: "やらない", color: "bg-orange-100 text-orange-800" },
+  ]
+  status_colors = {
+    "processing" => "bg-amber-100 text-amber-800",
+    "generated"  => "bg-blue-100 text-blue-800",
+    "pending"    => "bg-yellow-100 text-yellow-800",
+    "synced"     => "bg-green-100 text-green-800",
+    "failed"     => "bg-red-100 text-red-800",
+  }
+%>
+
+<div class="grid grid-cols-3 gap-4">
+  <% columns.each do |col| %>
+    <% tasks = @tasks_by_resolution.fetch(col[:key], []) %>
+    <div class="bg-gray-100 rounded-lg p-3">
+      <div class="flex items-center justify-between mb-3">
+        <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= col[:color] %>"><%= col[:label] %></span>
+        <span class="text-xs text-gray-500" data-count><%= tasks.size %></span>
+      </div>
+      <div class="space-y-2 min-h-[120px]" data-resolution="<%= col[:key] %>">
+        <% tasks.each do |task| %>
+          <div onclick="location.href='<%= tsukkomi.admin_task_path(task) %>'"
+               class="bg-white rounded-md border border-gray-200 p-3 shadow-sm hover:shadow cursor-pointer transition"
+               data-task-id="<%= task.id %>"
+               data-move-url="<%= tsukkomi.move_admin_task_path(task) %>">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-gray-400">#<%= task.id %></span>
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium <%= status_colors[task.status] %>"><%= task.status %></span>
+            </div>
+            <p class="text-sm font-medium text-gray-900 mb-1"><%= task.title %></p>
+            <p class="text-xs text-gray-400"><%= task.created_at.strftime("%Y-%m-%d %H:%M") %></p>
+          </div>
+        <% end %>
+        <p class="text-xs text-gray-400 text-center py-6 <%= "hidden" unless tasks.empty? %>" data-empty>ここにドロップ</p>
+      </div>
+    </div>
+  <% end %>
+</div>
