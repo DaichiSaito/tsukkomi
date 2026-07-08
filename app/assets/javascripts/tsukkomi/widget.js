@@ -108,10 +108,10 @@ import { createHistoryPanel } from './history-panel.js';
       if (newStatus === 'generated' && oldStatus === 'processing') {
         showToast(`タスク生成完了: ${title}`, '#10b981');
       } else if (newStatus === 'synced') {
-        const dest = backend === 'github_issues' ? 'GitHub' : backend === 'vibe_kanban' ? 'VibeKanban' : 'バックエンド';
+        const dest = backend === 'github_issues' ? 'GitHub' : 'バックエンド';
         showToast(`${dest} 登録完了: ${title}`, '#10b981');
       } else if (newStatus === 'failed' && oldStatus === 'pending') {
-        const dest = backend === 'github_issues' ? 'GitHub' : backend === 'vibe_kanban' ? 'VibeKanban' : 'バックエンド';
+        const dest = backend === 'github_issues' ? 'GitHub' : 'バックエンド';
         showToast(`${dest} 登録失敗: ${title}`, '#ef4444');
       } else if (newStatus === 'failed' && oldStatus === 'processing') {
         showToast(`タスク生成失敗: ${title}`, '#ef4444');
@@ -258,7 +258,8 @@ import { createHistoryPanel } from './history-panel.js';
     if (isSubmitting) return;
 
     try {
-      // 1. Capture screenshot
+      // 1. Capture screenshot. The first time (per page load) the browser shows
+      //    its own screen-share prompt; afterwards the stream is reused silently.
       showStatus('スクリーンショットを取得中...', { loading: true });
 
       let screenshotDataUrl;
@@ -272,6 +273,9 @@ import { createHistoryPanel } from './history-panel.js';
       }
 
       dismissStatus();
+
+      // User dismissed the screen-share prompt → abort silently.
+      if (screenshotDataUrl === null) return;
 
       // 2. Range selection
       const annotation = await createAnnotator();

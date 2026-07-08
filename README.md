@@ -50,8 +50,6 @@ Tsukkomi.configure do |config|
   # config.github_repo = "owner/repo"
   # config.github_auth_mode = :auto  # :token / :gh_cli / :auto
   # config.github_token = ENV["GITHUB_TOKEN"]
-  # config.backend = :vibe_kanban
-  # config.vibe_kanban_project_id = ENV["VIBE_KANBAN_PROJECT_ID"]
 
   # ウィジェット自動注入（デフォルト: true）
   # config.auto_inject = true

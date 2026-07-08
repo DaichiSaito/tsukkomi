@@ -82,7 +82,5 @@ module Tsukkomi
 end
 
 require_relative "github_issues"
-require_relative "vibe_kanban"
 
 Tsukkomi::Backends::Registry.register("github_issues", Tsukkomi::Backends::GithubIssues)
-Tsukkomi::Backends::Registry.register("vibe_kanban", Tsukkomi::Backends::VibeKanban)

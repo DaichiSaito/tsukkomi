@@ -193,11 +193,9 @@
             <%
               sync_label = case Tsukkomi.configuration.backend.to_sym
                            when :github_issues then "GitHub に issue を作成する"
-                           when :vibe_kanban then "VibeKanban にタスクを作成する"
                            end
               sync_loading = case Tsukkomi.configuration.backend.to_sym
                              when :github_issues then "GitHub に作成中..."
-                             when :vibe_kanban then "VibeKanban に作成中..."
                              end
             %>
             <%= form_with url: tsukkomi.sync_to_backend_admin_task_path(@task), method: :post, local: true, data: { turbo: false } do %>

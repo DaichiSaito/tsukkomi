@@ -51,10 +51,6 @@ Tsukkomi.configure do |config|
   # config.backend = :github_issues
   # config.github_repo = "owner/repo"
   #
-  # ■ vibe-kanban（Claude Code CLI + MCP 経由）
-  #   事前設定: claude mcp add vibe-kanban -- npx -y vibe-kanban@latest --mcp
-  # config.backend = :vibe_kanban
-  # config.vibe_kanban_project = "my-project"
 
   # --------------------------------------------------------------------------
   # ウィジェット設定

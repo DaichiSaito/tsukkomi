@@ -4,7 +4,6 @@ module Tsukkomi
     GITHUB_AUTH_MODES = %i[auto token gh_cli].freeze
 
     attr_accessor :backend, :github_repo, :github_token,
-                  :vibe_kanban_project_id, :vibe_kanban_project,
                   :anthropic_api_key, :claude_model,
                   :auto_inject, :reporter, :task_prompt,
                   :storage_service
@@ -15,8 +14,6 @@ module Tsukkomi
       @backend = nil
       @github_repo = nil
       @github_token = nil
-      @vibe_kanban_project_id = nil
-      @vibe_kanban_project = nil
       @anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
       @claude_model = "claude-opus-4-6"
       @llm_mode = :auto

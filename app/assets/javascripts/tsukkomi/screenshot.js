@@ -1,15 +1,164 @@
 /**
- * Screenshot module - SVG foreignObject capture.
- * Implements the capture directly (no html-to-image dependency) to avoid
- * the library's known side-effects that mutate the host page's stylesheets
- * and break layout.
+ * Screenshot module.
  *
- * Approach: clone body → inline computed styles → inline images →
- *           serialize to SVG foreignObject → render to canvas.
- * All operations are READ-ONLY on the original DOM.
+ * Primary strategy: the native Screen Capture API (getDisplayMedia) grabs the
+ * real rendered pixels of the current tab. This is pixel-perfect — it handles
+ * Retina (devicePixelRatio), web fonts, images and any CSS layout faithfully,
+ * so the region the user drag-selects always matches the captured screenshot.
+ *
+ * Fallback strategy: SVG foreignObject DOM reconstruction, used only when
+ * getDisplayMedia is unavailable (e.g. non-secure context or unsupported
+ * browser). This reconstruction can distort modern layouts and is a last resort.
+ *
+ * captureScreenshot() resolves to a data-URL of the visible viewport, or `null`
+ * when the user cancels the screen-share permission prompt (flow should abort).
  */
 
+/**
+ * Sentinel returned when the user dismisses the getDisplayMedia picker.
+ * The caller treats this as "abort silently", not "capture failed".
+ */
+export const CAPTURE_CANCELLED = null;
+
 export async function captureScreenshot(excludeNode) {
+  const supportsDisplayMedia =
+    typeof navigator !== 'undefined' &&
+    navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getDisplayMedia === 'function' &&
+    window.isSecureContext;
+
+  if (supportsDisplayMedia) {
+    try {
+      return await captureViaDisplayMedia(excludeNode);
+    } catch (err) {
+      // User dismissed the share picker → abort the whole flow silently.
+      if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
+        return CAPTURE_CANCELLED;
+      }
+      // Any other failure → fall back to the (less reliable) DOM reconstruction.
+      console.warn(
+        '[tsukkomi] getDisplayMedia failed, falling back to foreignObject:',
+        err,
+      );
+    }
+  }
+
+  return await captureViaForeignObject(excludeNode);
+}
+
+/* ================================================================== */
+/* Primary: native Screen Capture API                                 */
+/* ================================================================== */
+
+/**
+ * The active screen-capture stream, kept alive across captures so the user is
+ * only prompted once per page load. It survives soft (SPA/Inertia) navigations
+ * because the widget's JS context persists; a full reload tears it down and the
+ * next capture prompts again. Cleared when the user clicks Chrome's "Stop
+ * sharing", so the next capture re-acquires it.
+ */
+let sharedStream = null;
+
+function streamIsLive(stream) {
+  const track = stream && stream.getVideoTracks()[0];
+  return !!track && track.readyState === 'live';
+}
+
+async function captureViaDisplayMedia(excludeNode) {
+  if (!streamIsLive(sharedStream)) {
+    sharedStream = await acquireDisplayStream();
+  }
+  // Reuse the live stream: grab a fresh frame without stopping the tracks.
+  return await grabFrameFromStream(sharedStream, excludeNode);
+}
+
+async function acquireDisplayStream() {
+  // Keep options minimal: `preferCurrentTab` (Chrome) defaults the picker to
+  // this tab. It is mutually exclusive with surfaceSwitching / monitorTypeSurfaces,
+  // so we pass nothing else to avoid an InvalidStateError from conflicting hints.
+  const stream = await navigator.mediaDevices.getDisplayMedia({
+    video: { frameRate: { ideal: 8 } },
+    audio: false,
+    preferCurrentTab: true,
+  });
+
+  // If the user stops sharing (Chrome's "Stop sharing" bar), drop the cache so
+  // the next capture prompts again instead of reusing a dead stream.
+  stream.getVideoTracks().forEach((track) => {
+    track.addEventListener('ended', () => {
+      if (sharedStream === stream) sharedStream = null;
+    });
+  });
+
+  return stream;
+}
+
+/**
+ * Draw one frame from a MediaStream into a canvas and return its data-URL.
+ * Hides `excludeNode` (the widget host) for the instant of capture so our own
+ * UI never appears in the shot, then restores it. Exported for testing with a
+ * synthetic canvas.captureStream().
+ */
+export async function grabFrameFromStream(stream, excludeNode) {
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.srcObject = stream;
+
+  await video.play().catch(() => {});
+  await waitForVideoFrame(video);
+
+  const prevVisibility = excludeNode ? excludeNode.style.visibility : null;
+  if (excludeNode) excludeNode.style.visibility = 'hidden';
+  try {
+    // Let the visibility change propagate into the capture stream before we
+    // sample a frame, otherwise the widget UI may still be in the pixels.
+    await waitForVideoFrame(video);
+    await delay(120);
+
+    const vw = video.videoWidth || video.getBoundingClientRect().width;
+    const vh = video.videoHeight || video.getBoundingClientRect().height;
+    const canvas = document.createElement('canvas');
+    canvas.width = vw;
+    canvas.height = vh;
+    canvas.getContext('2d').drawImage(video, 0, 0, vw, vh);
+    return canvas.toDataURL('image/png');
+  } finally {
+    if (excludeNode) excludeNode.style.visibility = prevVisibility || '';
+    video.srcObject = null;
+  }
+}
+
+function waitForVideoFrame(video) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      video.requestVideoFrameCallback(() => done());
+    } else if (video.readyState >= 2) {
+      done();
+      return;
+    } else {
+      video.addEventListener('loadeddata', done, { once: true });
+    }
+    // Safety timeout so we never hang if no frame callback fires.
+    setTimeout(done, 500);
+  });
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/* ================================================================== */
+/* Fallback: SVG foreignObject DOM reconstruction                     */
+/* ================================================================== */
+
+async function captureViaForeignObject(excludeNode) {
   const w = window.innerWidth;
   const h = window.innerHeight;
 
@@ -71,8 +220,6 @@ export async function captureScreenshot(excludeNode) {
   canvas.getContext('2d').drawImage(img, 0, 0);
   return canvas.toDataURL();
 }
-
-/* ------------------------------------------------------------------ */
 
 function loadImg(src) {
   return new Promise((resolve, reject) => {

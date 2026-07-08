@@ -59,7 +59,6 @@ function buildStatusBadge(status) {
 function getSyncLabel(backend) {
   switch (backend) {
     case 'github_issues': return 'GitHub に登録';
-    case 'vibe_kanban': return 'VibeKanban に登録';
     default: return 'バックエンドに登録';
   }
 }
