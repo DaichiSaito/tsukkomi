@@ -18,6 +18,18 @@ module Tsukkomi
         @tasks_by_resolution = Tsukkomi::Task.includes(:feedback).recent.group_by(&:resolution)
       end
 
+      def move
+        @task = Tsukkomi::Task.find(params[:id])
+        case params[:resolution]
+        when "closed"  then @task.close!
+        when "wontfix" then @task.wontfix!
+        when "open"    then @task.reopen!
+        else
+          return head :unprocessable_entity
+        end
+        head :ok
+      end
+
       def show
         @task = Tsukkomi::Task.includes(:feedback).find(params[:id])
       end
